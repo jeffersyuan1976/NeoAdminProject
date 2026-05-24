@@ -219,7 +219,7 @@ public static class MenuSeedData
         ]),
         Menu("Api", "code", string.Empty, 0, SysMenuSidebarStyle.收起,
         [
-            Menu("Login", "log-in", "login", 100, children:
+            Menu("Login", "log-in", "login", 100, type: SysMenuType.接口, children:
             [
                 Api("Register", "user-plus", "Register", 101),
                 Api("GetWhoIsUsingList", "users", "GetWhoIsUsingList", 102),
@@ -235,11 +235,11 @@ public static class MenuSeedData
                 Api("ResetPassword", "unlock-keyhole", "ResetPassword", 112),
                 Api("SetAIAlarmLevel", "bot", "SetAIAlarmLevel", 113)
             ]),
-            Menu("Article", "newspaper", "article", 200, children:
+            Menu("Article", "newspaper", "article", 200, type: SysMenuType.接口, children:
             [
                 Api("GetAll", "list", "GetAll", 201)
             ])
-        ], isHidden: true)
+        ], type: SysMenuType.接口, isHidden: true)
     ];
 
     public static SysMenu Page(string label, string path, int sort, string icon) =>
