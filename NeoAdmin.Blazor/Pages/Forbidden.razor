@@ -1,0 +1,22 @@
+@page "/forbidden"
+@layout LayoutAdmin
+
+<PageTitle>无访问权限</PageTitle>
+
+<div class="flex flex-col items-center justify-center gap-4 py-24 text-center">
+    <LucideIcon Name="shield-off" Size="48" Class="text-muted-foreground" />
+    <h1 class="text-xl font-semibold">没有访问权限</h1>
+    <p class="max-w-md text-sm text-muted-foreground">
+        当前账号未被分配此页面菜单权限。如需访问，请联系管理员在「角色管理」中分配菜单。
+    </p>
+    <Button Variant="ButtonVariant.Outline" OnClick="GoHome">
+        返回控制台
+    </Button>
+</div>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private void GoHome() => NavigationManager.NavigateTo("/admin");
+}

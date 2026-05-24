@@ -72,8 +72,10 @@ public static class MenuSeedData
         string[] movedPaths =
         [
             "/neo-demo/ui/nova-button",
+            "/neo-demo/ui/file-cache",
             "/neo-demo/ui/anti-concurrency",
-            "/neo-demo/ui/transactional"
+            "/neo-demo/ui/transactional",
+            "/neo-demo/ui/animation"
         ];
 
         string[] obsoleteLabels = ["NovaButton", "AntiConcurrency", "Transactional"];
@@ -184,13 +186,15 @@ public static class MenuSeedData
             [
                 Page("实体选择组件", "/neo-demo/comp/select-components", 401, "list-checks"),
                 Page("字典和参数配置", "/neo-demo/comp/dict-param", 402, "sliders-horizontal"),
-                Menu("按钮权限", "shield", "/neo-demo/ui/nova-button", 403, children:
+                Page("权限说明", "/neo-demo/comp/permission-guide", 407, "book-open"),
+                Menu("按钮权限", "shield", "/neo-demo/comp/nova-button", 403, children:
                 [
                     Button("允许演示", "check", "demo_allow", 301),
                     Button("拦截演示", "ban", "demo_deny", 302)
                 ], type: SysMenuType.菜单),
+                Page("文件缓存", "/neo-demo/comp/file-cache", 406, "file-archive"),
                 Menu("防并发", "timer", "/neo-demo/ui/anti-concurrency", 404, type: SysMenuType.菜单),
-                Menu("事务", "database", "/neo-demo/ui/transactional", 405, type: SysMenuType.菜单)
+                Menu("事务", "database", "/neo-demo/comp/transactional", 405, type: SysMenuType.菜单)
             ]),
             Menu("UI 组件", "layout-grid", string.Empty, 500, SysMenuSidebarStyle.收起,
             [
@@ -204,14 +208,13 @@ public static class MenuSeedData
                 Page("数据展示", "/neo-demo/ui/data-display", 512, "table-2"),
                 Page("图表", "/neo-demo/ui/chart", 513, "chart-column"),
                 Page("反馈组件", "/neo-demo/ui/feedback", 520, "bell-ring"),
-                Page("动画演示", "/neo-demo/ui/animation", 521, "sparkles"),
+                Page("动画演示", "/neo-demo/comp/animation", 521, "sparkles"),
                 Page("移动端演示", "/neo-demo/ui/mobile", 522, "smartphone"),
                 Page("导航组件", "/neo-demo/ui/navigation", 530, "compass"),
                 Page("按钮与折叠", "/neo-demo/ui/layout-controls", 531, "mouse-pointer-click"),
                 Page("布局与主题", "/neo-demo/ui/layout-tools", 532, "columns-3"),
                 Page("模态与侧板", "/neo-demo/ui/overlays-modal", 540, "panel-top"),
-                Page("浮动与菜单", "/neo-demo/ui/overlays-floating", 541, "layers"),
-                Page("文件缓存", "/neo-demo/ui/file-cache", 542, "file-archive")
+                Page("浮动与菜单", "/neo-demo/ui/overlays-floating", 541, "layers")
             ])
         ]),
         Menu("Api", "code", string.Empty, 0, SysMenuSidebarStyle.收起,

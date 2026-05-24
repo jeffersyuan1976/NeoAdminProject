@@ -7,12 +7,15 @@
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Utils
 @using NeoAdmin.Blazor.Audit
+@using NeoAdmin.Blazor.Menus
 @using Microsoft.Extensions.Logging
 @inject IFreeSql FreeSql
 @inject NeoAdminAuthService AuthService
 @inject IJSRuntime JSRuntime
 @inject IToastService ToastService
 @inject ILoggerFactory LoggerFactory
+@inject MenuPermissionService MenuPermissionService
+@inject NavigationManager NavigationManager
 
 <div class="crud-table flex flex-col flex-1 min-h-0 min-w-0">
     @HeaderContent
@@ -30,7 +33,7 @@
             </div>
         }
         <div class="flex flex-wrap items-center gap-2">
-            @if (ShowToolbarRemove)
+            @if (ShowToolbarRemove && canToolbarRemove)
             {
                 <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" Title="@RemoveText"
                     Disabled="@(!HasSelectedRows)" OnClick="HandleBatchDeleteClick">
@@ -46,7 +49,7 @@
                 </Button>
             }
             @ToolbarContent
-            @if (IsAdd && EditTemplate != null)
+            @if (IsAdd && EditTemplate != null && canToolbarAdd)
             {
                 <Button Variant="ButtonVariant.Link" Size="@ButtonSize.Small" Title="@AddText" OnClick="HandleAddClick">
                     <LucideIcon Name="circle-plus" Size="16" />
@@ -103,7 +106,7 @@
                                 {
                                     @RowActionsContent(row)
                                 }
-                                @if (IsRowView && IsView && (ViewTemplate != null || EditTemplate != null))
+                                @if (IsRowView && IsView && canRowView && (ViewTemplate != null || EditTemplate != null))
                                 {
                                     <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Title="@ViewText"
                                         OnClick="@(() => ViewItemAsync(row.Item))">
@@ -119,7 +122,7 @@
                                         <span class="sr-only">审批</span>
                                     </Button>
                                 }
-                                @if (IsRowEdit && EditTemplate != null)
+                                @if (IsRowEdit && EditTemplate != null && canRowEdit)
                                 {
                                     <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Title="@EditText"
                                         Disabled="@(IsWorkflowAudit && row.Item is EntityAudited locked && !AuditWorkflowRules.CanEdit(locked))"
@@ -128,7 +131,7 @@
                                         <span class="sr-only">@EditText</span>
                                     </Button>
                                 }
-                                @if (IsRowRemove)
+                                @if (IsRowRemove && canRowRemove)
                                 {
                                     <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Title="@RemoveText"
                                         Disabled="@(IsWorkflowAudit && row.Item is EntityAudited lockedRemove && !AuditWorkflowRules.CanEdit(lockedRemove))"
@@ -424,6 +427,9 @@
     /// <summary>审批按钮权限所属的页面菜单路径，如 /Blog/Article。</summary>
     [Parameter] public string WorkflowAuditMenuPath { get; set; } = string.Empty;
 
+    /// <summary>用于权限判断的菜单路径，默认取当前页面路由。</summary>
+    [Parameter] public string MenuPath { get; set; } = string.Empty;
+
     private readonly CrudQueryInfo queryInfo = new();
     private List<CrudGridRow<TItem>> rows = new();
     private List<CrudGridRow<TItem>> selectedRows = new();
@@ -448,6 +454,12 @@
 
     private bool auditDialogOpen;
     private EntityAudited? auditTarget;
+
+    private bool canToolbarAdd = true;
+    private bool canToolbarRemove = true;
+    private bool canRowView = true;
+    private bool canRowEdit = true;
+    private bool canRowRemove = true;
 
     private bool IsPaged => effectivePageSize > 0;
     private int DataTablePageSize => IsPaged ? effectivePageSize : int.MaxValue;
@@ -476,6 +488,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadPermissionFlagsAsync();
+
         effectivePageSize = PageSize;
         queryInfo.InvokeQueryAsync = async () =>
         {
@@ -493,6 +507,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        await LoadPermissionFlagsAsync();
+
         if (effectivePageSize != PageSize)
         {
             effectivePageSize = PageSize;
@@ -552,6 +568,49 @@
         }
 
         StateHasChanged();
+    }
+
+
+    private async Task LoadPermissionFlagsAsync()
+    {
+        string path = ResolvePermissionMenuPath();
+        if (string.IsNullOrWhiteSpace(path) || MenuPathHelper.IsExemptPage(path))
+        {
+            canToolbarAdd = true;
+            canToolbarRemove = true;
+            canRowView = true;
+            canRowEdit = true;
+            canRowRemove = true;
+            return;
+        }
+
+        bool hasPage = await MenuPermissionService.HasPageAsync(path);
+        canRowView = hasPage;
+        canToolbarAdd = hasPage && await MenuPermissionService.HasButtonAsync(path, "add");
+        canToolbarRemove = hasPage && await MenuPermissionService.HasButtonAsync(path, "remove");
+        canRowEdit = hasPage && await MenuPermissionService.HasButtonAsync(path, "edit");
+        canRowRemove = canToolbarRemove;
+    }
+
+    private string ResolvePermissionMenuPath()
+    {
+        if (!string.IsNullOrWhiteSpace(MenuPath))
+        {
+            return MenuService.NormalizePath(MenuPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(WorkflowAuditMenuPath))
+        {
+            return MenuService.NormalizePath(WorkflowAuditMenuPath);
+        }
+
+        string relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
+        if (string.IsNullOrWhiteSpace(relativePath))
+        {
+            return "/";
+        }
+
+        return MenuService.NormalizePath("/" + relativePath);
     }
 
     public Task ReloadAsync() => LoadAsync();

@@ -15,6 +15,7 @@
 @using NeoAdmin.Blazor.Services
 @using Microsoft.AspNetCore.Components.Web
 @inject MenuService MenuService
+@inject MenuPermissionService MenuPermission
 
 @implements IAsyncDisposable
 
@@ -263,6 +264,11 @@
         currentUser = result.Data;
         siteSettings = await SiteSettingsService.GetAsync();
         await LoadPageSearchEntriesAsync();
+        if (!await EnsurePagePermissionAsync())
+        {
+            return;
+        }
+
         isAuthChecked = true;
         UpdatePageTitle();
         StateHasChanged();
@@ -286,8 +292,16 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        UpdatePageTitle();
-        InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(async () =>
+        {
+            if (isAuthChecked && !await EnsurePagePermissionAsync())
+            {
+                return;
+            }
+
+            UpdatePageTitle();
+            StateHasChanged();
+        });
     }
 
     private void UpdatePageTitle()
@@ -332,10 +346,30 @@
         NavigationManager.NavigateTo(href);
     }
 
+    private async Task<bool> EnsurePagePermissionAsync()
+    {
+        string relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
+        string pagePath = string.IsNullOrWhiteSpace(relativePath)
+            ? "/"
+            : MenuPathHelper.NormalizePagePath("/" + relativePath);
+
+        if (MenuPathHelper.IsExemptPage(pagePath))
+        {
+            return true;
+        }
+
+        if (await MenuPermission.HasPageAsync(pagePath))
+        {
+            return true;
+        }
+
+        NavigationManager.NavigateTo("/forbidden", replace: true);
+        return false;
+    }
+
     private async Task LoadPageSearchEntriesAsync()
     {
-        List<SysMenu> menus = await MenuService.GetNavigationAsync();
-        List<SysMenu> roots = MenuService.BuildTree(menus);
+        List<SysMenu> roots = await MenuPermission.GetNavigationMenusAsync();
         List<PageSearchEntry> pageLookup = new();
         int lookupSort = 0;
 

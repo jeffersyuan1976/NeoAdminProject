@@ -1,4 +1,4 @@
-namespace NeoAdmin.Blazor.Pages.DemoUI;
+namespace NeoAdmin.Blazor.Pages.DemoComp;
 
 internal static class NovaButtonDemoSnippets
 {

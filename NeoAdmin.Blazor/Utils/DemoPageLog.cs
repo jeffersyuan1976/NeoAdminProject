@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace NeoAdmin.Blazor.Pages.Demo;
+namespace NeoAdmin.Blazor.Utils;
 
 /// <summary>
 /// NeoDemo 演示页统一日志辅助。

@@ -19,6 +19,12 @@ public sealed record ApiResult
         Code = code,
         Message = message
     };
+
+    /// <summary>未登录或登录已过期。</summary>
+    public static ApiResult RequireLogin => Error("未登录或登录已过期", 401);
+
+    /// <summary>没有访问权限。</summary>
+    public static ApiResult NoPermission => Error("没有访问权限", 5003);
 }
 
 public sealed record ApiResult<T>

@@ -3,6 +3,7 @@
 @using NeoAdmin.Blazor.Menus
 @using Microsoft.AspNetCore.Components.Routing
 @inject MenuService MenuService
+@inject MenuPermissionService MenuPermission
 
 @if (Level == 0)
 {
@@ -116,8 +117,7 @@ else
             return;
         }
 
-        List<SysMenu> menus = await MenuService.GetNavigationAsync();
-        roots = MenuService.BuildTree(menus);
+        roots = await MenuPermission.GetNavigationMenusAsync();
         isLoading = false;
     }
 

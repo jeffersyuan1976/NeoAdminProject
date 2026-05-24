@@ -8,6 +8,8 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject ILogger<Login> Logger
+@using Microsoft.Extensions.Hosting
+@inject IHostEnvironment HostEnvironment
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Services
 
@@ -96,6 +98,12 @@
     protected override async Task OnInitializedAsync()
     {
         siteSettings = await SiteSettingsService.GetAsync();
+
+        if (HostEnvironment.IsDevelopment())
+        {
+            loginModel.Username = "admin";
+            loginModel.Password = "admin";
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -162,11 +170,11 @@
     {
         [Required(ErrorMessage = "请输入用户名")]
         [StringLength(50, ErrorMessage = "用户名不能超过 50 个字符")]
-        public string Username { get; set; } = "admin";
+        public string Username { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "请输入密码")]
         [StringLength(50, ErrorMessage = "密码不能超过 50 个字符")]
-        public string Password { get; set; } = "admin";
+        public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; } = true;
     }

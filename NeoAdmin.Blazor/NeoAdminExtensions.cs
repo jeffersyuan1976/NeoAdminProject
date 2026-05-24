@@ -13,6 +13,7 @@ using NeoAdmin.Blazor.Data;
 using NeoAdmin.Blazor.Entities;
 using NeoAdmin.Blazor.Menus;
 using NeoAdmin.Blazor.Middlewares;
+using NeoAdmin.Blazor.Mvc;
 using NeoAdmin.Blazor.Scheduling;
 using NeoAdmin.Blazor.SeedData;
 using NeoAdmin.Blazor.Services;
@@ -117,7 +118,9 @@ public static class NeoAdminExtensions
             ..hostAssemblies.Where(assembly => assembly is not null)
         ];
 
-        IMvcBuilder mvcBuilder = services.AddControllers();
+        services.AddScoped<NeoAdminPermissionFilter>();
+        IMvcBuilder mvcBuilder = services.AddControllers(options =>
+            options.Filters.AddService<NeoAdminPermissionFilter>());
         foreach (Assembly assembly in apiAssemblies)
         {
             mvcBuilder.AddApplicationPart(assembly);
