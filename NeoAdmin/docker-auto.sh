@@ -13,8 +13,8 @@ if ! docker info &>/dev/null; then
   fi
 fi
 
-# 与 docker-compose.yaml 宿主机端口一致；默认部署端口为 6038
-HOST_PORT="${HOST_PORT:-6038}"
+# 与 docker-compose.yaml 宿主机端口一致；默认部署端口为 5050
+HOST_PORT="${HOST_PORT:-5050}"
 
 mkdir -p "${SCRIPT_DIR}/Logs" "${SCRIPT_DIR}/keys" \
   "${SCRIPT_DIR}/wwwroot/uploads" "${SCRIPT_DIR}/wwwroot/avatars"
