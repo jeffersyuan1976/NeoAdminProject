@@ -1,19 +1,23 @@
 # NeoAdmin
 
-基于 **ASP.NET Core Blazor Server** 的现代化后台管理框架，UI 使用 [NeoUI.Blazor](https://neoui.io)，数据访问使用 **FreeSql**，开箱即用 SQLite，适合作为业务系统的管理端骨架或二次开发起点。
+基于 **ASP.NET Core Blazor Server** 的现代化后台管理框架，UI 使用 [NeoUI.Blazor](https://neoui.io)，数据访问使用 **FreeSql**，开箱即用 SQLite。`NeoAdmin.Blazor` 提供可复用的管理端核心，`NeoAdmin` 宿主项目演示如何扩展业务模块（博客 CRUD、REST API、定时任务等）。
 
 ## 特性
 
 - **Blazor 交互式服务端**：`InteractiveServer` 渲染，组件化开发体验
-- **NeoUI 组件库**：侧边栏布局（参照 NeoUI Blocks dashboard-02）、主题切换、表单/表格/弹层等完整 UI 能力
+- **NeoUI 组件库**：侧边栏布局（参照 NeoUI Blocks dashboard-02 / dashboard-11）、主题切换、表单/表格/弹层等完整 UI 能力
 - **通用 CRUD**：`CrudTable` 组件 + FreeSql，支持搜索、筛选、分页、批量删除、弹窗编辑
 - **RBAC 基础能力**：用户、角色、菜单、组织（树形）、角色-菜单/用户关联
 - **系统配置**：数据字典、系统参数、站点设置（标题/Logo 等）
 - **安全与运维**：登录鉴权（DataProtection Token）、登录日志、IP 白名单中间件、文件上传管理
+- **结构化日志**：Serilog 控制台 + 滚动文件日志，后台「系统日志」页可在线浏览
+- **REST API + Swagger**：`AddNeoAdminApi` 注册控制器，开发/生产可按 `IsSwagger` 开关文档 UI
 - **定时任务**：集成 [FreeScheduler](https://github.com/2881099/FreeScheduler)，支持 Cron 表达式
+- **审批流**：CRUD 页面可挂载提交/一审/拒绝/反审等按钮（博客「文章」已接入示例）
 - **雪花 ID**：Yitter.IdGenerator，多实例部署可配置 `WorkId`
 - **种子数据**：首次启动自动建表并初始化管理员、菜单、字典、参数等
 - **NeoDemo**：内置 NeoUI 组件演示页，便于对照文档与选型
+- **Docker 部署**：多阶段镜像 + compose 卷挂载（数据库、日志、上传目录、DataProtection keys）
 
 ## 技术栈
 
@@ -23,32 +27,45 @@
 | 前端框架 | Blazor Server（Razor Components） |
 | UI | NeoUI.Blazor 4.x |
 | ORM | FreeSql 3.x + Sqlite（可换其他 FreeSql Provider） |
+| 日志 | Serilog（Console + 按日滚动文件） |
 | 调度 | FreeScheduler + NCrontab |
+| API 文档 | Swashbuckle + Swagger UI |
 | ID | Yitter.IdGenerator（雪花） |
 
 ## 项目结构
 
 ```
 NeoAdmin/
-├── NeoAdmin/                 # 宿主 Web 项目（启动入口）
-│   ├── Program.cs            # 注册 NeoUI、NeoAdmin、Blazor 路由
-│   └── appsettings.json      # NeoAdmin 配置节
-├── NeoAdmin.Blazor/          # 管理端核心类库（可引用或打包）
-│   ├── Components/           # 布局、CrudTable、SplitPane、字典/参数组件等
-│   ├── Pages/                # 业务页面与 NeoDemo
-│   ├── Entities/             # 实体定义
-│   ├── SeedData/             # 菜单、用户、字典等种子数据
-│   ├── Services/             # 文件、组织、角色、定时任务等业务服务
-│   ├── Auth/                 # 登录鉴权
-│   └── Middlewares/          # IP 白名单等
-└── old/                      # 历史版本（NovaAdmin 等），仅供参考
+├── NeoAdmin/                      # 宿主 Web 项目（启动入口、业务扩展示例）
+│   ├── Program.cs                 # NeoUI、NeoAdmin、Serilog、Blazor 路由、API
+│   ├── Components/
+│   │   ├── Pages/                 # 控制台（/、/Admin）、/Home 占位页
+│   │   └── Blog/                  # 博客业务页面（分类、文章、评论等）
+│   ├── Api/                       # 宿主 REST 控制器（Login、Article 等）
+│   ├── Entities/ / Data/Entities/ # 宿主业务实体
+│   ├── SeedData/                  # 博客菜单等宿主种子
+│   ├── Jobs/                      # 定时任务（IP 白名单、博客等）
+│   ├── Dockerfile                 # 生产镜像
+│   ├── docker-compose.yaml        # 默认宿主机端口 5050
+│   ├── docker-auto.sh             # 一键构建并启动容器
+│   └── dotnet10.sh                # 本地 watch 开发
+├── NeoAdmin.Blazor/               # 管理端核心类库（可引用或打包 NuGet）
+│   ├── Components/                # 布局、CrudTable、SplitPane、字典/参数组件等
+│   ├── Pages/                    # 系统管理页、NeoDemo
+│   ├── Entities/ / Data/Entities/ # 系统实体
+│   ├── SeedData/                  # 菜单、用户、字典等种子
+│   ├── Services/                  # 文件、组织、角色、定时任务、Serilog 日志读取
+│   ├── Auth/                     # 登录鉴权
+│   ├── Api/                      # 内置 API 基类与 DTO
+│   └── Middlewares/              # IP 白名单等
+└── README.md
 ```
 
 ## 功能模块
 
 | 模块 | 路由 | 说明 |
 |------|------|------|
-| 控制台 | `/admin` | 管理首页 |
+| 控制台 | `/`、`/Admin` | 管理首页（基础设施监控仪表盘，宿主 `Admin.razor`） |
 | 菜单管理 | `/admin/menu` | 动态菜单、权限类型（菜单/按钮/接口/CRUD） |
 | 用户管理 | `/admin/user` | 用户 CRUD、启用状态 |
 | 角色管理 | `/admin/role` | 角色与菜单、用户绑定 |
@@ -59,25 +76,41 @@ NeoAdmin/
 | IP 白名单 | `/admin/ip-whitelist` | 访问 IP 控制 |
 | 文件管理 | `/admin/file` | 上传文件记录与下载 |
 | 定时任务 | `/admin/task-scheduler` | Cron 任务管理 |
+| 系统日志 | `/admin/system-log` | 浏览 Serilog 滚动文件，支持筛选与自动刷新 |
 | 登录 | `/login` | 登录页 |
-| NeoDemo | `/neo-demo/*` | NeoUI 组件示例 |
-
-菜单种子中还预留了「博客管理」等占位路由，页面需自行实现。
+| NeoDemo | `/neo-demo/*` | NeoUI 组件示例（`/neo-demo/ui/*`、`/neo-demo/comp/*`） |
+| 博客管理 | `/Blog/*` | 宿主示例：分类、频道、文章（含审批流）、标签、评论等 |
+| 宿主占位 | `/Home` | 预留给宿主项目自定义页面 |
 
 ## 快速开始
 
 ### 环境要求
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- Docker（可选，用于容器部署）
 
-### 运行
+### 本地运行
 
 ```bash
 cd NeoAdmin
 dotnet watch run
+# 或
+./dotnet10.sh
 ```
 
 默认地址：<http://localhost:5038>（见 `Properties/launchSettings.json`）。
+
+### Docker 部署
+
+在 `NeoAdmin/` 目录下：
+
+```bash
+./docker-auto.sh
+```
+
+- 默认映射宿主机 **5050** → 容器 80（可通过环境变量 `HOST_PORT` 修改）
+- 持久化卷：`neoadmin.db`、`Logs/`、`wwwroot/uploads`、`wwwroot/avatars`、`keys/`（DataProtection）
+- 访问：<http://localhost:5050>
 
 ### 默认账号
 
@@ -90,6 +123,10 @@ dotnet watch run
 
 生产环境请务必修改 `appsettings.json` 中的 `SeedAdminPassword`，并关闭弱口令。
 
+### Swagger
+
+开发环境默认开启；生产可在配置中显式设置 `"IsSwagger": true`。文档 UI 路径：<http://localhost:5038/api>（Docker 部署时将端口改为 5050）。
+
 ## 配置说明
 
 `NeoAdmin/appsettings.json` 中的 `NeoAdmin` 节点：
@@ -97,6 +134,7 @@ dotnet watch run
 ```json
 {
   "NeoAdmin": {
+    "IsSwagger": true,
     "DataType": "Sqlite",
     "ConnectionString": "Data Source=neoadmin.db",
     "AutoSyncStructure": true,
@@ -122,7 +160,9 @@ dotnet watch run
 | `AutoSyncStructure` | 是否自动同步表结构 |
 | `MonitorCommand` | 是否在控制台打印 SQL |
 | `WorkId` | 雪花算法机器号（0–63，多实例需不同） |
-| `EnableIpWhitelist` | 是否启用 IP 白名单（代码默认 `true`，可在 `NeoAdminOptions` 中调整） |
+| `EnableIpWhitelist` | 是否启用 IP 白名单（默认 `true`） |
+| `IsSwagger` | 是否启用 Swagger UI；未配置时开发环境开、其它环境关 |
+| `LogDirectory` / `LogFilePrefix` | Serilog 文件日志目录与前缀（默认 `Logs/admin-*.log`） |
 | `FileUpload` | 上传目录、按日期分目录、大小与扩展名限制 |
 
 ## 集成到其他项目
@@ -130,19 +170,26 @@ dotnet watch run
 在宿主 `Program.cs` 中：
 
 ```csharp
+builder.AddNeoAdminSerilog();
+
 builder.Services.AddNeoUIPrimitives();
 builder.Services.AddNeoUIComponents();
 builder.Services.AddNeoAdmin(builder.Configuration);
+builder.Services.AddNeoAdminApi(Assembly.GetExecutingAssembly());
 
 // ...
 
+app.UseNeoAdminSerilogRequestLogging();
 app.UseNeoAdmin();
 app.MapRazorComponents<YourApp>()
     .AddAdditionalAssemblies(typeof(NeoAdmin.Blazor.Components.LayoutAdmin).Assembly)
     .AddInteractiveServerRenderMode();
 ```
 
-`NeoAdmin.Blazor` 可作为类库引用，也可按 NuGet 包方式发布（`PackageId: NeoAdmin.Blazor`）。
+- 根路由 `/` 建议由宿主项目自行定义（本仓库示例为控制台仪表盘）
+- 业务菜单可通过 `NeoAdmin.Blazor.SeedData.MenuSeedData.EnsureMenus` 追加种子
+- 定时任务在 `AddNeoAdmin` 的 `SchedulerAssemblies` 中注册宿主程序集
+- `NeoAdmin.Blazor` 可作为类库引用，也可按 NuGet 包发布（`PackageId: NeoAdmin.Blazor`）
 
 ## 核心组件
 
