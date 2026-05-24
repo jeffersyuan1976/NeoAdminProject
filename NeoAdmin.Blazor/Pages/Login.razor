@@ -11,79 +11,79 @@
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Services
 
-@* auth-01: https://neoui.io/blocks/auth-01 — 有登录页配图时左右分栏展示。 *@
-<div class="flex w-full flex-col overflow-hidden rounded-xl border bg-card shadow-sm @(
-    string.IsNullOrWhiteSpace(siteSettings?.LoginImage) ? "max-w-sm" : "max-w-4xl md:flex-row")">
-    @if (!string.IsNullOrWhiteSpace(siteSettings?.LoginImage))
+@{
+    var hasLoginImage = !string.IsNullOrWhiteSpace(siteSettings?.LoginImage);
+}
+<div class="@(hasLoginImage
+         ? "relative w-full max-w-5xl min-h-[26rem] overflow-hidden rounded-xl md:min-h-[32rem]"
+         : "w-full max-w-sm")">
+    @if (hasLoginImage)
     {
-        <img src="@NavigationManager.ToMediaUrl(siteSettings.LoginImage)"
-             alt=""
-             class="h-40 w-full shrink-0 object-cover sm:h-48 md:h-auto md:max-w-xs md:min-h-[26rem]" />
+        <img src="@NavigationManager.ToMediaUrl(siteSettings!.LoginImage)" alt=""
+            class="absolute inset-0 h-full w-full object-cover" />
     }
-    <div class="flex flex-1 items-center justify-center p-4 md:p-6">
+    <div class="@(hasLoginImage
+             ? "relative z-10 flex min-h-[inherit] items-center justify-end p-4 sm:p-6 md:p-10 lg:p-12"
+             : "flex items-center justify-center p-4")">
         <div class="w-full" style="max-width: 24rem;">
-    <Card Class="@("@container")">
-        <CardHeader Class="space-y-1 pb-4">
-            <div class="mb-2 flex items-center justify-center">
-                @if (!string.IsNullOrWhiteSpace(siteSettings?.Logo))
-                {
-                    <img src="@NavigationManager.ToMediaUrl(siteSettings.Logo)"
-                         alt=""
-                         class="size-10 rounded-xl object-cover" />
-                }
-                else
-                {
-                    <div class="flex size-10 items-center justify-center rounded-xl bg-foreground">
-                        <LucideIcon Name="layers" Size="18" Class="text-background" />
+            <Card Class="@(hasLoginImage ? "@container shadow-lg" : "@container")">
+                <CardHeader Class="space-y-1 pb-4">
+                    <div class="mb-2 flex items-center justify-center">
+                        @if (!string.IsNullOrWhiteSpace(siteSettings?.Logo))
+                        {
+                            <img src="@NavigationManager.ToMediaUrl(siteSettings.Logo)" alt=""
+                                class="size-10 rounded-xl object-cover" />
+                        }
+                        else
+                        {
+                            <div class="flex size-10 items-center justify-center rounded-xl bg-foreground">
+                                <LucideIcon Name="layers" Size="18" Class="text-background" />
+                            </div>
+                        }
                     </div>
-                }
-            </div>
-            <CardTitle Class="text-center text-xl font-semibold">欢迎回来</CardTitle>
-            <CardDescription Class="text-center">登录 @(siteSettings?.Title ?? "NeoAdmin") 管理后台</CardDescription>
-        </CardHeader>
-        <CardContent Class="space-y-4">
-            <EditForm Model="@loginModel" OnValidSubmit="@HandleLoginAsync" class="space-y-4">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-sm text-destructive" />
-                @if (!string.IsNullOrWhiteSpace(errorMessage))
-                {
-                    <div class="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                        @errorMessage
-                    </div>
-                }
+                    <CardTitle Class="text-center text-xl font-semibold">欢迎回来</CardTitle>
+                    <CardDescription Class="text-center">登录 @(siteSettings?.Title ?? "NeoAdmin") 管理后台</CardDescription>
+                </CardHeader>
+                <CardContent Class="space-y-4">
+                    <EditForm Model="@loginModel" OnValidSubmit="@HandleLoginAsync" class="space-y-4">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-sm text-destructive" />
+                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            <div
+                                class="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                @errorMessage
+                            </div>
+                        }
 
-                <Field>
-                    <FieldLabel For="userName">用户名</FieldLabel>
-                    <FieldContent>
-                        <Input Id="userName"
-                               Placeholder="请输入用户名"
-                               @bind-Value="loginModel.Username" />
-                    </FieldContent>
-                    <ValidationMessage For="@(() => loginModel.Username)" class="text-xs text-destructive" />
-                </Field>
+                        <Field>
+                            <FieldLabel For="userName">用户名</FieldLabel>
+                            <FieldContent>
+                                <Input Id="userName" Placeholder="请输入用户名" @bind-Value="loginModel.Username" />
+                            </FieldContent>
+                            <ValidationMessage For="@(() => loginModel.Username)" class="text-xs text-destructive" />
+                        </Field>
 
-                <Field>
-                    <FieldLabel For="password">密码</FieldLabel>
-                    <FieldContent>
-                        <Input Id="password"
-                               Type="InputType.Password"
-                               Placeholder="请输入密码"
-                               @bind-Value="loginModel.Password" />
-                    </FieldContent>
-                    <ValidationMessage For="@(() => loginModel.Password)" class="text-xs text-destructive" />
-                </Field>
+                        <Field>
+                            <FieldLabel For="password">密码</FieldLabel>
+                            <FieldContent>
+                                <Input Id="password" Type="InputType.Password" Placeholder="请输入密码"
+                                    @bind-Value="loginModel.Password" />
+                            </FieldContent>
+                            <ValidationMessage For="@(() => loginModel.Password)" class="text-xs text-destructive" />
+                        </Field>
 
-                <div class="flex items-center gap-2">
-                    <Checkbox Id="remember" @bind-Checked="loginModel.RememberMe" />
-                    <Label For="remember" Class="cursor-pointer text-sm font-normal">记住我 30 天</Label>
-                </div>
+                        <div class="flex items-center gap-2">
+                            <Checkbox Id="remember" @bind-Checked="loginModel.RememberMe" />
+                            <Label For="remember" Class="cursor-pointer text-sm font-normal">记住我 30 天</Label>
+                        </div>
 
-                <Button Type="ButtonType.Submit" Class="w-full" Variant="ButtonVariant.Outline">
-                    登录
-                </Button>
-            </EditForm>
-        </CardContent>
-    </Card>
+                        <Button Type="ButtonType.Submit" Class="w-full" Variant="ButtonVariant.Outline">
+                            登录
+                        </Button>
+                    </EditForm>
+                </CardContent>
+            </Card>
         </div>
     </div>
 </div>
