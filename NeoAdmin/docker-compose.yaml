@@ -1,6 +1,8 @@
+# 路径均相对本文件所在目录（NeoAdmin/），可在服务器任意目录克隆后执行 docker-auto.sh
 services:
   neoadmin:
     build:
+      # 仓库根目录（相对 compose 文件向上一级）
       context: ..
       dockerfile: NeoAdmin/Dockerfile
     image: neoadmin:latest
@@ -16,5 +18,4 @@ services:
       - ./wwwroot/avatars:/app/wwwroot/avatars
       - ./keys:/app/keys
       - ./neoadmin.db:/app/neoadmin.db
-      - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
