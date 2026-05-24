@@ -13,9 +13,9 @@ RUN dotnet restore "NeoAdmin/NeoAdmin.csproj"
 COPY . .
 WORKDIR /src/NeoAdmin
 
-# 发布项目（含构建；勿先 build 到自定义 -o 再 publish --no-build，否则找不到 bin/Release 产物）
+# 发布项目（.NET 10：publish 勿加 --no-restore，否则不会生成 wwwroot/_framework/blazor.web.js）
 FROM build AS publish
-RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish --no-restore
+RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish
 
 # 第二阶段：运行阶段
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
