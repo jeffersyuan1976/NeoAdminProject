@@ -27,6 +27,7 @@ project.fragment.lock.json
 artifacts/
 *.nupkg
 *.snupkg
+nupkg/
 
 # IDE
 .vs/
@@ -44,14 +45,16 @@ Thumbs.db
 *.db-wal
 uploads/
 
-# Secrets (keep templates only)
+# Secrets（宿主项目；模板 content 内保留示例配置）
 appsettings.Development.json
+!NeoAdmin.Templates/**/appsettings.Development.json
 appsettings.*.local.json
 .env
 .env.*
 
 # Cursor / local AI
 .claude/
+.cursor/
 
 # 旧代码归档（仅本地保留，不上传）
 old/

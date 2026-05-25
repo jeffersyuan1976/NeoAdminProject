@@ -32,10 +32,29 @@
 | API 文档 | Swashbuckle + Swagger UI |
 | ID | Yitter.IdGenerator（雪花） |
 
+## 项目模板（dotnet new）
+
+仓库提供 **NeoAdmin.Templates**，用法与 NovaAdmin 的 `novaadmin` 模板类似：
+
+```bash
+# 本地开发：先打包 NeoAdmin.Blazor，再安装模板
+dotnet pack NeoAdmin.Blazor/NeoAdmin.Blazor.csproj -c Release -o ./nupkg
+dotnet new install ./NeoAdmin.Templates
+
+mkdir MyAdmin && cd MyAdmin
+dotnet new neoadmin -n MyAdmin -o .
+# 若 NeoAdmin.Blazor 尚未发布到 nuget.org，还原时加上本地包目录：
+dotnet restore --source ../nupkg --source https://api.nuget.org/v3/index.json
+dotnet watch run
+```
+
+详见 [NeoAdmin.Templates/README.md](NeoAdmin.Templates/README.md)。
+
 ## 项目结构
 
 ```
 NeoAdmin/
+├── NeoAdmin.Templates/            # dotnet new 项目模板（NeoAdminApp 骨架）
 ├── NeoAdmin/                      # 宿主 Web 项目（启动入口、业务扩展示例）
 │   ├── Program.cs                 # NeoUI、NeoAdmin、Serilog、Blazor 路由、API
 │   ├── Components/
@@ -197,6 +216,30 @@ app.MapRazorComponents<YourApp>()
 - **`SplitPane`**：左右分栏布局（如字典管理）
 - **`NeoSelectDict` / `NeoParamText`**：字典下拉、参数文本展示
 - **`LayoutAdmin`**：带侧边栏、用户菜单的后台主布局
+
+## 发布到 NuGet（GitHub Actions）
+
+仓库已配置 [`.github/workflows/publish-nuget.yml`](.github/workflows/publish-nuget.yml)：推送 **`v*` 标签**（如 `v1.0.0`）时，会自动打包并推送 **NeoAdmin.Blazor** 与 **NeoAdmin.Templates** 到 [nuget.org](https://www.nuget.org)。
+
+**一次性配置**
+
+1. 在 [nuget.org](https://www.nuget.org/account/apikeys) 创建 API Key（权限 Push，可限定包 ID）。
+2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加 `NUGET_API_KEY`。
+3. 发版前确认 `NeoAdmin.Templates/content/NeoAdminApp/NeoAdminApp.csproj` 里 `NeoAdmin.Blazor` 的 `Version` 与本次标签版本一致。
+
+**发版命令**
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+在 **Actions** 页查看流水线；成功后安装：
+
+```bash
+dotnet new install NeoAdmin.Templates --version 1.0.0
+dotnet new neoadmin -n MyApp -o .
+```
 
 ## 相关链接
 

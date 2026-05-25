@@ -12,6 +12,11 @@
     <Title>NeoAdmin.Blazor</Title>
     <Product>NeoAdmin.Blazor</Product>
     <PackageId>NeoAdmin.Blazor</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>NeoAdmin</Authors>
+    <PackageTags>blazor;blazor-server;admin;freesql;neoui;neoadmin</PackageTags>
+    <RepositoryUrl>https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject</PackageProjectUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>

@@ -1,0 +1,56 @@
+using System.Reflection;
+using NeoAdminApp.SeedData;
+using NeoAdmin.Blazor.Extensions;
+using NeoAdmin.Blazor.Components;
+using NeoAdminApp.Jobs;
+using NeoUI.Blazor.Extensions;
+using NeoUI.Blazor.Primitives.Extensions;
+using Serilog;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.AddNeoAdminSerilog();
+
+builder.Services.AddNeoUIPrimitives();
+builder.Services.AddNeoUIComponents();
+builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddNeoAdmin(builder.Configuration, options =>
+{
+    options.SchedulerAssemblies = [Assembly.GetExecutingAssembly()];
+});
+builder.Services.AddNeoAdminApi(Assembly.GetExecutingAssembly());
+
+var app = builder.Build();
+
+app.Logger.LogInformation("NeoAdmin 启动。Environment={Environment}", app.Environment.EnvironmentName);
+
+DataSetup.Initialize(app.Services);
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseNeoAdminSerilogRequestLogging();
+app.UseHttpsRedirection();
+// 运行时上传的文件不在 StaticAssets 清单内，需用 StaticFiles 提供
+app.UseStaticFiles();
+app.MapStaticAssets();
+app.UseNeoAdmin();
+app.UseAntiforgery();
+app.MapRazorPages();
+app.MapRazorComponents<NeoAdminApp.App>()
+    .AddAdditionalAssemblies(typeof(LayoutAdmin).Assembly)
+    .AddInteractiveServerRenderMode();
+
+try
+{
+    app.Logger.LogInformation("NeoAdmin 启动完成，开始监听请求。");
+    app.Run();
+}
+finally
+{
+    Log.CloseAndFlush();
+}

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/neoadmin.db;**/neoadmin.db-*;**/wwwroot/uploads/**</DefaultItemExcludes>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NeoAdmin.Blazor" Version="1.0.0" />
+    <PackageReference Include="NeoUI.Blazor" Version="4.1.7" />
+    <PackageReference Include="Rougamo.Fody" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Remove="**/neoadmin.db" />
+    <Watch Remove="**/neoadmin.db-*" />
+    <Watch Remove="**/wwwroot/uploads/**" />
+    <Content Update="wwwroot/uploads/**" Watch="false" />
+    <None Update="neoadmin.db" Watch="false" />
+    <None Update="neoadmin.db-*" Watch="false" />
+  </ItemGroup>
+</Project>
