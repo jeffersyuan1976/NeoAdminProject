@@ -25,65 +25,66 @@
         <CrudSearchFilter QueryInfo="queryInfo" />
     }
 
-    <div class="flex flex-wrap items-center justify-start gap-3 mb-4">
-        @if (!Compact)
-        {
-            <div class="flex items-center min-h-9 mr-2">
-                <h2 class="text-lg font-semibold leading-none">@Title</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex flex-wrap items-center gap-3">
+            @if (!Compact)
+            {
+                <div class="flex items-center min-h-9 mr-2">
+                    <h2 class="text-lg font-semibold leading-none">@Title</h2>
+                </div>
+            }
+            <div class="flex flex-wrap items-center gap-2">
+                @if (ShowToolbarRemove && canToolbarRemove)
+                {
+                    <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" Title="@RemoveText"
+                        Disabled="@(!HasSelectedRows)" OnClick="HandleBatchDeleteClick">
+                        <LucideIcon Name="trash-2" Size="16" />
+                        <span>@RemoveText@(HasSelectedRows ? $" ({selectedRows.Count})" : "")</span>
+                    </Button>
+                }
+                @if (IsRefresh)
+                {
+                    <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" OnClick="HandleRefreshClick">
+                        <LucideIcon Name="refresh-cw" Size="16" />
+                        <span>刷新</span>
+                    </Button>
+                }
+                @ToolbarContent
+                @if (IsAdd && EditTemplate != null && canToolbarAdd)
+                {
+                    <Button Variant="ButtonVariant.Link" Size="@ButtonSize.Small" Title="@AddText" OnClick="HandleAddClick">
+                        <LucideIcon Name="circle-plus" Size="16" />
+                        <span>@AddText</span>
+                    </Button>
+                }
             </div>
-        }
-        <div class="flex flex-wrap items-center gap-2">
-            @if (ShowToolbarRemove && canToolbarRemove)
-            {
-                <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" Title="@RemoveText"
-                    Disabled="@(!HasSelectedRows)" OnClick="HandleBatchDeleteClick">
-                    <LucideIcon Name="trash-2" Size="16" />
-                    <span>@RemoveText@(HasSelectedRows ? $" ({selectedRows.Count})" : "")</span>
-                </Button>
-            }
-            @if (IsRefresh)
-            {
-                <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" OnClick="HandleRefreshClick">
-                    <LucideIcon Name="refresh-cw" Size="16" />
-                    <span>刷新</span>
-                </Button>
-            }
-            @ToolbarContent
-            @if (IsAdd && EditTemplate != null && canToolbarAdd)
-            {
-                <Button Variant="ButtonVariant.Link" Size="@ButtonSize.Small" Title="@AddText" OnClick="HandleAddClick">
-                    <LucideIcon Name="circle-plus" Size="16" />
-                    <span>@AddText</span>
-                </Button>
-            }
-            @if (IsSearchText)
-            {
-                <form class="w-60" @onsubmit="HandleSearchSubmit" @onsubmit:preventDefault>
-                    <Input Type="InputType.Search" @bind-Value="searchText" Placeholder="@SearchPlaceholder"
-                        @onblur="HandleSearchBlur" />
-                </form>
-            }
         </div>
+        @if (IsSearchText)
+        {
+            <form class="w-96 shrink-0" @onsubmit="HandleSearchSubmit" @onsubmit:preventDefault>
+                <Input Type="InputType.Search" @bind-Value="searchText" Placeholder="@SearchPlaceholder"
+                    @onblur="HandleSearchBlur" />
+            </form>
+        }
     </div>
 
     <div class="flex-1 min-h-0 min-w-0">
         <DataTable TData="CrudGridRow<TItem>" Data="@rows" ShowToolbar="false" ShowPagination="false"
-            InitialPageSize="@DataTablePageSize" SelectionMode="@SelectionMode"
-            SelectedItems="@selectedRows" SelectedItemsChanged="@OnSelectedRowsChanged"
-            ColumnsVisibility="false" IsLoading="@isLoading" Dense="true" ColumnSizing="TableColumnSizing.Fixed"
-            AdditionalRowAttributes="GetRowAttributes" Class="h-full w-full min-w-0"
-            TableContainerClass="h-full min-w-0 overflow-x-hidden">
+            InitialPageSize="@DataTablePageSize" SelectionMode="@SelectionMode" SelectedItems="@selectedRows"
+            SelectedItemsChanged="@OnSelectedRowsChanged" ColumnsVisibility="false" IsLoading="@isLoading" Dense="true"
+            ColumnSizing="TableColumnSizing.Fixed" AdditionalRowAttributes="GetRowAttributes"
+            Class="h-full w-full min-w-0" TableContainerClass="h-full min-w-0 overflow-x-hidden">
             <Columns>
                 @if (IsWorkflowAudit)
                 {
                     <DataTableColumn TData="CrudGridRow<TItem>" TValue="SysAuditStatus"
-                        Property="@(row => row.Item is EntityAudited audited ? audited.AuditStatus : default)"
-                        Header="审批" Sortable="false" Width="96px" Alignment="ColumnAlignment.Center">
+                        Property="@(row => row.Item is EntityAudited audited ? audited.AuditStatus : default)" Header="审批"
+                        Sortable="false" Width="96px" Alignment="ColumnAlignment.Center">
                         <CellTemplate Context="row">
                             @if (row.Item is EntityAudited auditedItem)
                             {
                                 <Badge Variant="@AuditWorkflowRules.GetStatusBadgeVariant(auditedItem.AuditStatus)"
-                                       Class="@AuditWorkflowRules.GetStatusBadgeClass(auditedItem.AuditStatus)">
+                                    Class="@AuditWorkflowRules.GetStatusBadgeClass(auditedItem.AuditStatus)">
                                     @AuditWorkflowRules.GetStatusLabel(auditedItem.AuditStatus)
                                 </Badge>
                             }
@@ -284,10 +285,8 @@
                 <DialogDescription>提交、审核、退回或拒绝当前记录。</DialogDescription>
             </DialogHeader>
             <div class="max-h-[70vh] overflow-y-auto p-2">
-                <CrudAuditPanel Item="auditEntity"
-                                EntityType="typeof(TItem)"
-                                MenuPath="@WorkflowAuditMenuPath"
-                                OnChanged="HandleAuditPanelChanged" />
+                <CrudAuditPanel Item="auditEntity" EntityType="typeof(TItem)" MenuPath="@WorkflowAuditMenuPath"
+                    OnChanged="HandleAuditPanelChanged" />
             </div>
             <DialogFooter Class="mt-4">
                 <Button Variant="ButtonVariant.Outline" Type="ButtonType.Button"
@@ -301,7 +300,8 @@
 
 @code {
     private ILogger? _logger;
-    private ILogger Logger => _logger ??= LoggerFactory.CreateLogger($"{typeof(CrudTable<TItem>).Name}<{typeof(TItem).Name}>");
+    private ILogger Logger => _logger ??=
+    LoggerFactory.CreateLogger($"{typeof(CrudTable<TItem>).Name}<{typeof(TItem).Name}>");
 
     private bool _isRemove = true;
     private bool? _isRowRemove;
@@ -542,12 +542,12 @@
             }
 
             Logger.LogInformation(
-                "查询 {Entity} 完成：第 {PageNumber} 页，每页 {PageSize} 条，共 {Total} 条，搜索={SearchText}",
-                typeof(TItem).Name,
-                pageNumber,
-                effectivePageSize,
-                total,
-                appliedSearchText ?? string.Empty);
+            "查询 {Entity} 完成：第 {PageNumber} 页，每页 {PageSize} 条，共 {Total} 条，搜索={SearchText}",
+            typeof(TItem).Name,
+            pageNumber,
+            effectivePageSize,
+            total,
+            appliedSearchText ?? string.Empty);
         }
         catch (Exception ex)
         {
@@ -766,9 +766,9 @@
             if (!success)
             {
                 Logger.LogWarning(
-                    "保存 {Entity} 失败：{EntityDesc}",
-                    typeof(TItem).Name,
-                    EntityLogHelper.Describe(editor));
+                "保存 {Entity} 失败：{EntityDesc}",
+                typeof(TItem).Name,
+                EntityLogHelper.Describe(editor));
                 return;
             }
         }
@@ -785,10 +785,10 @@
         }
 
         Logger.LogInformation(
-            "{Action} {Entity} 成功：{EntityDesc}",
-            isNewItem ? "新增" : "更新",
-            typeof(TItem).Name,
-            EntityLogHelper.Describe(editor));
+        "{Action} {Entity} 成功：{EntityDesc}",
+        isNewItem ? "新增" : "更新",
+        typeof(TItem).Name,
+        EntityLogHelper.Describe(editor));
 
         if (OnSaved.HasDelegate)
         {
@@ -1111,8 +1111,8 @@
     }
 
     private bool IsSameRowSelection(
-        IReadOnlyList<CrudGridRow<TItem>> incoming,
-        IReadOnlyList<CrudGridRow<TItem>> current)
+    IReadOnlyList<CrudGridRow<TItem>> incoming,
+    IReadOnlyList<CrudGridRow<TItem>> current)
     {
         if (incoming.Count != current.Count)
         {
@@ -1177,22 +1177,22 @@
     {
         HashSet<CrudGridRow<TItem>> selectedSet = selectedRows.ToHashSet();
         TreeCascadeSelectionHelper.ApplyCascade(
-            rows,
-            index,
-            selected,
-            row => LevelSelector!(row.Item),
-            (row, isSelected) =>
+        rows,
+        index,
+        selected,
+        row => LevelSelector!(row.Item),
+        (row, isSelected) =>
+        {
+            if (isSelected)
             {
-                if (isSelected)
-                {
-                    selectedSet.Add(row);
-                }
-                else
-                {
-                    selectedSet.Remove(row);
-                }
-            },
-            row => selectedSet.Contains(row));
+                selectedSet.Add(row);
+            }
+            else
+            {
+                selectedSet.Remove(row);
+            }
+        },
+        row => selectedSet.Contains(row));
 
         selectedRows = rows.Where(selectedSet.Contains).ToList();
     }

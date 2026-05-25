@@ -10,19 +10,14 @@ internal static class AnimationDemoSnippets
                   Loop="true"
                   OnSlideChange="OnCarouselSlideChanged">
             <CarouselItem>
-                <div class="flex h-48 items-center justify-center rounded-lg bg-sky-500 text-2xl font-semibold text-white">
-                    Slide 1
-                </div>
+                <img src="/_content/NeoAdmin.Blazor/images/demo-subway.jpg"
+                     alt="地铁站掠影"
+                     class="block w-full h-auto rounded-lg" />
             </CarouselItem>
             <CarouselItem>
-                <div class="flex h-48 items-center justify-center rounded-lg bg-emerald-500 text-2xl font-semibold text-white">
-                    Slide 2
-                </div>
-            </CarouselItem>
-            <CarouselItem>
-                <div class="flex h-48 items-center justify-center rounded-lg bg-violet-500 text-2xl font-semibold text-white">
-                    Slide 3
-                </div>
+                <img src="/_content/NeoAdmin.Blazor/images/demo-mountain.jpg"
+                     alt="山顶远眺"
+                     class="block w-full h-auto rounded-lg" />
             </CarouselItem>
         </Carousel>
         """;

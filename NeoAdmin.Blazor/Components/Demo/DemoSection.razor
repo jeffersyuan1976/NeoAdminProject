@@ -1,4 +1,7 @@
 @namespace NeoAdmin.Blazor.Components
+@inject IJSRuntime JS
+@inject IToastService ToastService
+
 <div class="rounded-lg border bg-background p-4">
     <div class="mb-1 font-semibold">@Title</div>
     <p class="mb-4 text-sm text-muted-foreground">@Description</p>
@@ -6,7 +9,22 @@
     @if (!string.IsNullOrWhiteSpace(Code))
     {
         <div class="mt-4 pt-4">
-            <div class="mb-2 text-xs font-medium text-muted-foreground">源码</div>
+            <div class="mb-2 flex items-center justify-between gap-2">
+                <div class="text-xs font-medium text-muted-foreground">源码</div>
+                <div class="flex shrink-0 gap-1">
+                    <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="CopyCodeAsync">
+                        <LucideIcon Name="copy" Size="14" />
+                        复制
+                    </Button>
+                    <Button Variant="ButtonVariant.Outline"
+                            Size="ButtonSize.Small"
+                            Class="border-violet-300/60 text-violet-700 hover:bg-violet-50 dark:border-violet-700/50 dark:text-violet-300 dark:hover:bg-violet-950/40"
+                            OnClick="CopyForAiAsync">
+                        <LucideIcon Name="sparkles" Size="14" />
+                        复制给 AI
+                    </Button>
+                </div>
+            </div>
             <pre class="neo-demo-code overflow-x-auto rounded-md border bg-muted/40 p-3 text-xs leading-relaxed"><code>@Code</code></pre>
         </div>
     }
@@ -24,6 +42,72 @@
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string? AiNotes { get; set; }
+
+    private async Task CopyCodeAsync()
+    {
+        await CopyAsync(Code!, "源码已复制到剪贴板");
+    }
+
+    private async Task CopyForAiAsync()
+    {
+        await CopyAsync(BuildAiPrompt(), "AI 提示已复制到剪贴板");
+    }
+
+    private async Task CopyAsync(string text, string toastMessage)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("neoAdminAuth.copyText", text);
+            ToastService.Success("已复制", toastMessage);
+        }
+        catch
+        {
+            ToastService.Error("复制失败", "请手动选中源码复制");
+        }
+    }
+
+    private string BuildAiPrompt()
+    {
+        var notes = string.IsNullOrWhiteSpace(AiNotes)
+            ? string.Empty
+            : $"""
+
+              补充说明：
+              {AiNotes}
+              """;
+
+        return $"""
+            # 任务
+            请使用 NeoAdmin / NeoUI Blazor 组件库，帮我设计或实现一个管理后台页面（或页面片段）。
+
+            # 技术约束（必须遵守）
+            - 框架：ASP.NET Core Blazor Server（Razor Components，InteractiveServer）
+            - UI 库：NeoUI.Blazor 4.x（不要 invent 新组件名，不要改用 MudBlazor / Ant Design 等）
+            - 样式：Tailwind CSS utility classes（与现有 Demo 一致）
+            - 管理页布局：使用 @@layout LayoutAdmin
+            - 组件命名空间：NeoAdmin.Blazor.Components
+            - 图标：使用 <LucideIcon Name="..." />
+            - 反馈提示：使用 IToastService（@@inject IToastService ToastService）
+
+            # 参考组件：{Title}
+            {Description}
+            {notes}
+
+            # 示例代码（请在此基础上扩展，保持 API 一致）
+            ```razor
+            {Code}
+            ```
+
+            # 输出要求
+            1. 给出完整可运行的 .razor 页面或片段
+            2. 说明需要 inject 的服务
+            3. 若涉及 CRUD，优先参考项目内 CrudTable 模式
+            4. 保持与 NeoAdmin 现有代码风格一致（中文 UI 文案、Tailwind 间距习惯）
+            """;
+    }
 }
 
 <style>

@@ -58,10 +58,4 @@
   --alert-danger-bg: oklch(0.18 0.008 27);
 }
 
-/* 表单聚焦：加强边框与光晕（NeoUI 默认 ring-ring/50 偏淡） */
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 40%, transparent);
-}
+

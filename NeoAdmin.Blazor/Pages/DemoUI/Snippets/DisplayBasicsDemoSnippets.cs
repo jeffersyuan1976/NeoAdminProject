@@ -4,8 +4,8 @@ internal static class DisplayBasicsDemoSnippets
 {
     public const string AspectRatio = """
         <AspectRatio Ratio="16/9" Class="max-w-md overflow-hidden rounded-lg bg-muted">
-            <img src="https://picsum.photos/seed/neoadmin/640/360"
-                 alt="示例图片"
+            <img src="/_content/NeoAdmin.Blazor/images/demo-mountain.jpg"
+                 alt="山顶远眺"
                  class="h-full w-full object-cover" />
         </AspectRatio>
 
@@ -16,7 +16,7 @@ internal static class DisplayBasicsDemoSnippets
 
     public const string Avatar = """
         <Avatar Size="AvatarSize.Default">
-            <AvatarImage Source="https://picsum.photos/seed/user1/80" Alt="用户头像" />
+            <AvatarImage Source="/_content/NeoAdmin.Blazor/images/demo-band.jpg" Alt="用户头像" />
             <AvatarFallback>NA</AvatarFallback>
         </Avatar>
 

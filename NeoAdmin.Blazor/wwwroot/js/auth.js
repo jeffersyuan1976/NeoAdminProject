@@ -18,5 +18,8 @@ window.neoAdminAuth = {
     clearToken: function () {
         window.localStorage.removeItem("neoadmin:token");
         window.localStorage.removeItem("neoadmin:isLogin");
+    },
+    copyText: async function (text) {
+        await navigator.clipboard.writeText(text);
     }
 };

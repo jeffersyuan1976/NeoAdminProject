@@ -1,58 +1,82 @@
 @namespace NeoAdmin.Blazor.Components
 @if (QueryInfo.Filters.Length > 0)
 {
-    <div class="mb-4 grid grid-cols-4 gap-3 rounded-lg border border-border bg-muted/20 p-3">
-        @for (int i = 0; i < QueryInfo.Filters.Length; i++)
-        {
-            CrudFilterInfo filter = QueryInfo.Filters[i];
-            if (filter.Options.Length == 0)
-            {
-                continue;
-            }
-
-            int index = i;
-
-            <div class="flex flex-wrap items-center gap-2 @GetColClass(filter.Col)">
-                <span class="w-16 shrink-0 text-sm text-muted-foreground">@filter.Label</span>
-                @if (filter.Type == CrudFilterType.DateRange)
+    <Collapsible @bind-Open="collapsibleOpen" Class="mb-4 rounded-lg border border-border bg-muted/20 p-3">
+        <div class="flex items-center justify-between gap-2">
+            <span class="text-sm text-muted-foreground">
+                筛选条件
+                @if (HasActiveFilters)
                 {
-                    <DateRangePicker StartDate="@GetStartDate(filter)"
-                        StartDateChanged="@(value => HandleDateRangeChanged(index, value, null))" EndDate="@GetEndDate(filter)"
-                        EndDateChanged="@(value => HandleDateRangeChanged(index, null, value))" ButtonSize="ButtonSize.Small"
-                        ButtonVariant="ButtonVariant.Outline" Class="max-w-xs" />
+                    <Badge Variant="BadgeVariant.Secondary" Class="ml-2">已筛选</Badge>
                 }
-                else if (filter.Type == CrudFilterType.Text)
+            </span>
+            <CollapsibleTrigger>
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                    @(collapsibleOpen ? "收起筛选" : "展开筛选")
+                    <LucideIcon Name="@(collapsibleOpen ? "chevron-up" : "chevron-down")" Size="16" />
+                </Button>
+            </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+            <div class="grid grid-cols-4 gap-3 pt-3">
+                @for (int i = 0; i < QueryInfo.Filters.Length; i++)
                 {
-                    <Input Type="InputType.Search" Value="@filter.Options[0].Value"
-                        ValueChanged="@(value => HandleTextChanged(index, value))" Class="max-w-xs" Placeholder="请输入" />
-                }
-                else
-                {
-                    <div class="flex flex-wrap gap-1">
-                        <Button Variant="@(filter.HasValue? ButtonVariant.Outline: ButtonVariant.Default)" Size="ButtonSize.Small"
-                            OnClick="@(() => HandleTagClick(index, -1))">
-                            默认
-                        </Button>
-                        @for (int optionIndex = 0; optionIndex < filter.Options.Length; optionIndex++)
+                    CrudFilterInfo filter = QueryInfo.Filters[i];
+                    if (filter.Options.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    int index = i;
+
+                    <div class="flex flex-wrap items-center gap-2 @GetColClass(filter.Col)">
+                        <span class="w-16 shrink-0 text-sm text-muted-foreground">@filter.Label</span>
+                        @if (filter.Type == CrudFilterType.DateRange)
                         {
-                            int localOptionIndex = optionIndex;
-                            CrudFilterOption option = filter.Options[optionIndex];
-                            <Button Variant="@(option.Selected? ButtonVariant.Default: ButtonVariant.Outline)" Size="ButtonSize.Small"
-                                OnClick="@(() => HandleTagClick(index, localOptionIndex))">
-                                @option.Label
-                            </Button>
+                            <DateRangePicker StartDate="@GetStartDate(filter)"
+                                StartDateChanged="@(value => HandleDateRangeChanged(index, value, null))" EndDate="@GetEndDate(filter)"
+                                EndDateChanged="@(value => HandleDateRangeChanged(index, null, value))" ButtonSize="ButtonSize.Small"
+                                ButtonVariant="ButtonVariant.Outline" Class="max-w-xs" />
                         }
+                        else if (filter.Type == CrudFilterType.Text)
+                        {
+                            <Input Type="InputType.Search" Value="@filter.Options[0].Value"
+                                ValueChanged="@(value => HandleTextChanged(index, value))" Class="max-w-xs" Placeholder="请输入" />
+                        }
+                        else
+                        {
+                            <div class="flex flex-wrap gap-1">
+                                <Button Variant="@(filter.HasValue? ButtonVariant.Outline: ButtonVariant.Default)" Size="ButtonSize.Small"
+                                    OnClick="@(() => HandleTagClick(index, -1))">
+                                    默认
+                                </Button>
+                                @for (int optionIndex = 0; optionIndex < filter.Options.Length; optionIndex++)
+                                {
+                                    int localOptionIndex = optionIndex;
+                                    CrudFilterOption option = filter.Options[optionIndex];
+                                    <Button Variant="@(option.Selected? ButtonVariant.Default: ButtonVariant.Outline)" Size="ButtonSize.Small"
+                                        OnClick="@(() => HandleTagClick(index, localOptionIndex))">
+                                        @option.Label
+                                    </Button>
+                                }
+                            </div>
+                        }
+
                     </div>
                 }
-
             </div>
-        }
-    </div>
+        </CollapsibleContent>
+    </Collapsible>
 }
 
 @code {
     [Parameter, EditorRequired]
     public CrudQueryInfo QueryInfo { get; set; } = default!;
+
+    private bool collapsibleOpen = true;
+
+    private bool HasActiveFilters =>
+        QueryInfo.Filters.Any(filter => filter.Options.Length > 0 && filter.HasValue);
 
     private static string GetColClass(int col) =>
     col switch

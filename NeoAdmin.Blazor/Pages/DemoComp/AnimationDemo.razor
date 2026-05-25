@@ -45,30 +45,33 @@
                                       Loop="true"
                                       OnSlideChange="OnCarouselSlideChanged">
                                 <CarouselItem>
-                                    <div class="flex h-48 items-center justify-center rounded-lg bg-sky-500 text-2xl font-semibold text-white">
-                                        Slide 1
-                                    </div>
+                                    <img src="/_content/NeoAdmin.Blazor/images/demo-subway.jpg"
+                                         alt="地铁站掠影"
+                                         class="block w-full h-auto rounded-lg" />
                                 </CarouselItem>
                                 <CarouselItem>
-                                    <div class="flex h-48 items-center justify-center rounded-lg bg-emerald-500 text-2xl font-semibold text-white">
-                                        Slide 2
-                                    </div>
+                                    <img src="/_content/NeoAdmin.Blazor/images/demo-mountain.jpg"
+                                         alt="山顶远眺"
+                                         class="block w-full h-auto rounded-lg" />
                                 </CarouselItem>
                                 <CarouselItem>
-                                    <div class="flex h-48 items-center justify-center rounded-lg bg-violet-500 text-2xl font-semibold text-white">
-                                        Slide 3
-                                    </div>
+                                    <img src="/_content/NeoAdmin.Blazor/images/demo-desert-night.jpg"
+                                         alt="沙漠星空"
+                                         class="block w-full h-auto rounded-lg" />
                                 </CarouselItem>
                                 <CarouselItem>
-                                    <AspectRatio Ratio="16/9" Class="overflow-hidden rounded-lg bg-muted">
-                                        <img src="https://picsum.photos/seed/neocarousel/640/360"
-                                             alt="示例图片"
-                                             class="h-full w-full object-cover" />
-                                    </AspectRatio>
+                                    <img src="/_content/NeoAdmin.Blazor/images/demo-bears.jpg"
+                                         alt="棕熊与幼崽"
+                                         class="block w-full h-auto rounded-lg" />
+                                </CarouselItem>
+                                <CarouselItem>
+                                    <img src="/_content/NeoAdmin.Blazor/images/demo-band.jpg"
+                                         alt="现场演出"
+                                         class="block w-full h-auto rounded-lg" />
                                 </CarouselItem>
                             </Carousel>
                             <p class="text-sm text-muted-foreground">
-                                当前幻灯片：@(carouselSlideIndex + 1) / 4（支持拖拽与箭头导航）
+                                当前幻灯片：@(carouselSlideIndex + 1) / 5（支持拖拽与箭头导航）
                             </p>
                         </div>
                     </DemoSection>
