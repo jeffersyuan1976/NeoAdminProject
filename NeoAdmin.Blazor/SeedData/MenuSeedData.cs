@@ -165,7 +165,8 @@ public static class MenuSeedData
 
     private static List<SysMenu> CreateMenus() =>
     [
-        Menu("控制台", "layout-dashboard", "/admin", 10),
+        Menu("首页", "home", "/", 10, isHidden: true),
+        Menu("控制台", "layout-dashboard", "/admin", 10, isHidden: true),
         Menu("系统管理", "settings", string.Empty, 900, SysMenuSidebarStyle.展开,
         [
             Menu("菜单管理", "list-tree", "/admin/menu", 910, type: SysMenuType.增删改查),

@@ -48,6 +48,11 @@ public sealed class MenuPermissionService
     }
 
     SysMenu? pageMenu = FindMenuByPath(snapshot.AllMenus, menuPath);
+    if (pageMenu is null && MenuPathHelper.PathsEqual(menuPath, "/"))
+    {
+      pageMenu = FindMenuByPath(snapshot.AllMenus, "/admin");
+    }
+
     if (pageMenu is null || !IsPageMenuType(pageMenu.Type))
     {
       return false;

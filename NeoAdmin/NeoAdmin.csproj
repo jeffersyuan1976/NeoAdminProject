@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NeoAdmin.Blazor\NeoAdmin.Blazor.csproj" />
-    <PackageReference Include="NeoUI.Blazor" Version="4.0.0" />
+    <PackageReference Include="NeoUI.Blazor" Version="4.1.7" />
   </ItemGroup>
 
   <!-- 上传图片、SQLite 写入勿参与 dotnet watch，避免 Hot Reload 崩溃 -->

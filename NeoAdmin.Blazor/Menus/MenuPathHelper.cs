@@ -30,7 +30,12 @@ public static class MenuPathHelper
 
   public static string NormalizeCompareKey(string? path)
   {
-    if (string.IsNullOrWhiteSpace(path) || path == "/")
+    if (string.IsNullOrWhiteSpace(path))
+    {
+      return string.Empty;
+    }
+
+    if (path == "/")
     {
       return "/";
     }

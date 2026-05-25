@@ -17,9 +17,11 @@ internal static class DataDisplayDemoSnippets
 
     public const string DataGrid = """
         <DataGrid TItem="DemoProduct" Items="@products" Height="300px" PageSize="10" FillWidth="true">
-            <DataGridColumn TItem="DemoProduct" Field="Name" Header="名称" Sortable="true" Flex="1" />
-            <DataGridColumn TItem="DemoProduct" Field="Category" Header="分类" Sortable="true" />
-            <DataGridColumn TItem="DemoProduct" Field="Price" Header="价格" Sortable="true" Width="100px" />
+            <Columns>
+                <DataGridColumn TItem="DemoProduct" Field="Name" Header="名称" Sortable="true" Flex="1" />
+                <DataGridColumn TItem="DemoProduct" Field="Category" Header="分类" Sortable="true" />
+                <DataGridColumn TItem="DemoProduct" Field="Price" Header="价格" Sortable="true" Width="100px" />
+            </Columns>
         </DataGrid>
         """;
 

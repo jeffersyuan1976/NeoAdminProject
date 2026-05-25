@@ -14,14 +14,13 @@ internal static class AdvancedDateTimeDemoSnippets
 
     public const string DateInput = """
         <Label For="date-input">日期</Label>
-        <DatePicker Id="date-input"
-                    Class="w-[280px]"
-                    @bind-SelectedDate="dateInputValue"
-                    Placeholder="选择日期" />
+        <DateInput Id="date-input"
+                   Class="w-[280px]"
+                   @bind-Value="dateInputValue"
+                   Placeholder="选择日期" />
 
-        <DatePicker Class="w-[280px]"
-                    @bind-SelectedDate="dateInputBirth"
-                    ShowIcon="false" />
+        <DateInput Class="w-[280px]"
+                   @bind-Value="dateInputBirth" />
         """;
 
     public const string DatePicker = """
@@ -40,14 +39,14 @@ internal static class AdvancedDateTimeDemoSnippets
 
     public const string TimeInput = """
         <Label For="time-input">时间（24 小时）</Label>
-        <TimePicker Id="time-input"
-                    Class="w-[240px]"
-                    @bind-SelectedTime="timeInputValue"
-                    Use12Hour="false" />
+        <TimeInput Id="time-input"
+                   Class="w-[240px]"
+                   @bind-Value="timeInputValue"
+                   Use12Hour="false" />
 
-        <TimePicker Class="w-[240px]"
-                    @bind-SelectedTime="timeInput12h"
-                    Use12Hour="true" />
+        <TimeInput Class="w-[240px]"
+                   @bind-Value="timeInput12h"
+                   Use12Hour="true" />
         """;
 
     public const string TimePicker = """

@@ -79,10 +79,12 @@
                                   PageSize="10"
                                   FillWidth="true"
                                   Class="max-w-3xl">
-                            <DataGridColumn TItem="DemoProduct" Field="Name" Header="名称" Sortable="true" Flex="1" />
-                            <DataGridColumn TItem="DemoProduct" Field="Category" Header="分类" Sortable="true" />
-                            <DataGridColumn TItem="DemoProduct" Field="Price" Header="价格" Sortable="true" Width="110px" />
-                            <DataGridColumn TItem="DemoProduct" Field="Stock" Header="库存" Sortable="true" Width="90px" />
+                            <Columns>
+                                <DataGridColumn TItem="DemoProduct" Field="Name" Header="名称" Sortable="true" Flex="1" />
+                                <DataGridColumn TItem="DemoProduct" Field="Category" Header="分类" Sortable="true" />
+                                <DataGridColumn TItem="DemoProduct" Field="Price" Header="价格" Sortable="true" Width="110px" />
+                                <DataGridColumn TItem="DemoProduct" Field="Stock" Header="库存" Sortable="true" Width="90px" />
+                            </Columns>
                         </DataGrid>
                         <p class="mt-2 text-xs text-muted-foreground">基于 AG Grid，首次加载可能需要短暂初始化。</p>
                     </DemoSection>

@@ -49,25 +49,21 @@
                     <DemoSection Title="Date Input"
                                  Description="Keyboard-driven segmented date field with optional calendar picker"
                                  Code="@AdvancedDateTimeDemoSnippets.DateInput">
-                        <p class="mb-4 text-xs text-muted-foreground">
-                            NeoUI.Blazor 4.0.0 尚未包含 DateInput 组件，此处以 DatePicker 演示同类日期录入（官方文档见 demos.neoui.io）。
-                        </p>
                         <div class="grid max-w-md gap-6">
                             <div class="space-y-2">
                                 <Label For="date-input">日期</Label>
-                                <DatePicker Id="date-input"
-                                            Class="w-[280px]"
-                                            @bind-SelectedDate="dateInputValue"
-                                            Placeholder="选择日期" />
+                                <DateInput Id="date-input"
+                                           Class="w-[280px]"
+                                           @bind-Value="dateInputValue"
+                                           Placeholder="选择日期" />
                                 <p class="text-sm text-muted-foreground">
                                     值：@(dateInputValue?.ToString("D") ?? "无")
                                 </p>
                             </div>
                             <div class="space-y-2">
                                 <Label>预设出生日期</Label>
-                                <DatePicker Class="w-[280px]"
-                                            @bind-SelectedDate="dateInputBirth"
-                                            ShowIcon="false" />
+                                <DateInput Class="w-[280px]"
+                                           @bind-Value="dateInputBirth" />
                                 <p class="text-sm text-muted-foreground">
                                     出生日期：@(dateInputBirth?.ToString("D") ?? "无")
                                 </p>
@@ -112,25 +108,22 @@
                     <DemoSection Title="Time Input"
                                  Description="Keyboard-driven segmented time field with optional clock picker"
                                  Code="@AdvancedDateTimeDemoSnippets.TimeInput">
-                        <p class="mb-4 text-xs text-muted-foreground">
-                            NeoUI.Blazor 4.0.0 尚未包含 TimeInput 组件，此处以 TimePicker 演示同类时间录入。
-                        </p>
                         <div class="grid max-w-md gap-6">
                             <div class="space-y-2">
                                 <Label For="time-input">时间（24 小时）</Label>
-                                <TimePicker Id="time-input"
-                                            Class="w-[240px]"
-                                            @bind-SelectedTime="timeInputValue"
-                                            Use12Hour="false" />
+                                <TimeInput Id="time-input"
+                                           Class="w-[240px]"
+                                           @bind-Value="timeInputValue"
+                                           Use12Hour="false" />
                                 <p class="text-sm text-muted-foreground">
                                     值：@(timeInputValue?.ToString("HH:mm") ?? "无")
                                 </p>
                             </div>
                             <div class="space-y-2">
                                 <Label>12 小时制</Label>
-                                <TimePicker Class="w-[240px]"
-                                            @bind-SelectedTime="timeInput12h"
-                                            Use12Hour="true" />
+                                <TimeInput Class="w-[240px]"
+                                           @bind-Value="timeInput12h"
+                                           Use12Hour="true" />
                                 <p class="text-sm text-muted-foreground">
                                     值：@(timeInput12h?.ToString("hh:mm tt") ?? "无")
                                 </p>
