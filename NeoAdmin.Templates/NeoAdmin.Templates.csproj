@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>NeoAdmin.Templates</PackageId>
     <Title>NeoAdmin.Templates</Title>
@@ -16,6 +16,10 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
+
+  <Target Name="SyncFromNeoAdmin" BeforeTargets="Pack" Condition="'$(SkipSyncFromNeoAdmin)' != 'true'">
+    <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/sync-from-neoadmin.py&quot;" />
+  </Target>
 
   <ItemGroup>
     <Compile Remove="content\**\*" />
