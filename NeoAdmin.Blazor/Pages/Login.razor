@@ -17,7 +17,7 @@
     var hasLoginImage = !string.IsNullOrWhiteSpace(siteSettings?.LoginImage);
 }
 <div class="@(hasLoginImage
-         ? "relative w-full max-w-5xl min-h-[26rem] overflow-hidden rounded-xl md:min-h-[32rem]"
+         ? "relative w-full max-w-5xl min-h-[26rem] overflow-hidden rounded-xl"
          : "w-full max-w-sm")">
     @if (hasLoginImage)
     {
@@ -25,8 +25,8 @@
             class="absolute inset-0 h-full w-full object-cover" />
     }
     <div class="@(hasLoginImage
-             ? "relative z-10 flex min-h-[inherit] items-center justify-end p-4 sm:p-6 md:p-10 lg:p-12"
-             : "flex items-center justify-center p-4")">
+             ? "relative z-10 flex min-h-[inherit] items-center justify-end sm:p-6 md:p-10 lg:p-12"
+             : "flex items-center justify-center")">
         <div class="w-full" style="max-width: 24rem;">
             <Card Class="@(hasLoginImage ? "@container shadow-lg" : "@container")">
                 <CardHeader Class="space-y-1 pb-4">
