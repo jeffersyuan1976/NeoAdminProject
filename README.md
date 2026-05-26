@@ -50,6 +50,15 @@ dotnet watch run
 
 详见 [NeoAdmin.Templates/README.md](NeoAdmin.Templates/README.md)。修改 `NeoAdmin/` 后执行 `python3 NeoAdmin.Templates/sync-from-neoadmin.py` 更新模板内容。
 
+## 宿主 Tailwind CSS（NeoAdmin / 模板项目）
+
+`NeoAdmin` 与 `dotnet new neoadmin` 生成的项目自带 **Tailwind v4** 流水线（见 [NeoUI Theming](https://neoui.io/docs/theming)）：
+
+- `dotnet build` / `dotnet publish` 会自动 `npm install` 并编译 `wwwroot/css/tailwind.css`
+- 开发时可另开终端：`cd NeoAdmin && npm run watch:css`
+- **需安装 Node.js**（Docker 镜像构建阶段已安装）
+- `NeoAdmin.Blazor`（NuGet）内页面样式仍走 `_content/NeoAdmin.Blazor/*.css`；宿主 Tailwind 主要扫描本工程 `.razor`（开发时 `ProjectReference` 会额外扫描 `NeoAdmin.Blazor` 源码）
+
 ## 项目结构
 
 ```
@@ -67,7 +76,9 @@ NeoAdmin/
 │   ├── Dockerfile                 # 生产镜像
 │   ├── docker-compose.yaml        # 默认宿主机端口 5050
 │   ├── docker-auto.sh             # 一键构建并启动容器
-│   └── dotnet10.sh                # 本地 watch 开发
+│   ├── dotnet10.sh                # 本地 watch 开发
+│   ├── package.json               # Tailwind v4（build 时编译 wwwroot/css/tailwind.css）
+│   └── wwwroot/css/               # app-input.css → tailwind.css
 ├── NeoAdmin.Blazor/               # 管理端核心类库（可引用或打包 NuGet）
 │   ├── Components/                # 布局、CrudTable、SplitPane、字典/参数组件等
 │   ├── Pages/                    # 系统管理页、NeoDemo

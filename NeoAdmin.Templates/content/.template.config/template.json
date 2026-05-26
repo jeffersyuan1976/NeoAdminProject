@@ -18,6 +18,7 @@
       "exclude": [
         "**/[Bb]in/**",
         "**/[Oo]bj/**",
+        "**/node_modules/**",
         "**/.template.config/**",
         "**/Logs/**",
         "**/*.db",

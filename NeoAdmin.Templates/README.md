@@ -19,6 +19,8 @@ cd MyAdmin
 dotnet watch run
 ```
 
+首次构建会执行 `npm install` 并生成 `wwwroot/css/tailwind.css`（需本机 **Node.js**）。样式开发可运行 `npm run watch:css`。
+
 ## 本地验证
 
 见 [Test.md](Test.md)（仅本地，已加入 `.gitignore`）。

@@ -13,6 +13,11 @@ SOURCE = ROOT / "NeoAdmin"
 TARGET = Path(__file__).resolve().parent / "content" / "NeoAdminApp"
 BLAZOR_CSPROJ = ROOT / "NeoAdmin.Blazor" / "NeoAdmin.Blazor.csproj"
 
+# 从 NeoAdmin 同步到模板时跳过的文件名（模板保留自己的版本）
+SKIP_SYNC_FILENAMES = {
+    "tailwind.config.js",  # 模板用 NuGet，不扫描 ../NeoAdmin.Blazor 源码
+}
+
 # 不同步（模板专用：NuGet 引用、单项目 Docker、Fody）
 KEEP_TEMPLATE_ONLY = {
     "NeoAdminApp.csproj",
@@ -39,7 +44,7 @@ def should_skip(path: Path) -> bool:
     if any(part in SKIP_DIRS for part in path.parts):
         return True
     name = path.name
-    if name in KEEP_TEMPLATE_ONLY:
+    if name in KEEP_TEMPLATE_ONLY or name in SKIP_SYNC_FILENAMES:
         return True
     return any(name.endswith(s) for s in SKIP_SUFFIXES)
 

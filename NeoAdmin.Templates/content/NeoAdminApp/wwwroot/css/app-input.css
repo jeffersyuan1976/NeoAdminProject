@@ -1,0 +1,12 @@
+/**
+ * Tailwind v4 入口（NeoAdminApp 宿主）
+ * 构建：npm run build:css → wwwroot/css/tailwind.css
+ * NeoAdmin.Blazor（NuGet）内页面样式见 _content/NeoAdmin.Blazor/*.css
+ * @see https://neoui.io/docs/theming
+ */
+
+@config "../../tailwind.config.js";
+
+@import 'tailwindcss';
+
+@theme inline;

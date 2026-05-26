@@ -19,8 +19,23 @@
     <Watch Remove="**/neoadmin.db" />
     <Watch Remove="**/neoadmin.db-*" />
     <Watch Remove="**/wwwroot/uploads/**" />
+    <Watch Remove="**/node_modules/**" />
     <Content Update="wwwroot/uploads/**" Watch="false" />
     <None Update="neoadmin.db" Watch="false" />
     <None Update="neoadmin.db-*" Watch="false" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="package.json" />
+    <Content Remove="package-lock.json" />
+    <Content Remove="tailwind.config.js" />
+  </ItemGroup>
+
+  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json')">
+    <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" />
+  </Target>
+
+  <Target Name="BuildTailwindCss" BeforeTargets="Build" Condition="Exists('$(ProjectDir)package.json')">
+    <Exec Command="npm run build:css" WorkingDirectory="$(ProjectDir)" />
+  </Target>
 </Project>
