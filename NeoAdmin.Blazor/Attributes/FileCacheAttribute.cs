@@ -80,7 +80,10 @@ public class FileCacheAttribute : MoAttribute
             return;
         }
 
-        string cacheKey = (string)context.Datas[CacheKeyState];
+        if (context.Datas[CacheKeyState] is not string cacheKey || string.IsNullOrWhiteSpace(cacheKey))
+        {
+            return;
+        }
 
         if (typeof(Task).IsAssignableFrom(context.ReturnType) && context.ReturnValue is Task task)
         {
@@ -177,7 +180,7 @@ public class FileCacheAttribute : MoAttribute
                 return false;
             }
 
-            value = DeserializeValue(GetCacheValueType(context.ReturnType), entry);
+            value = DeserializeValue(GetCacheValueType(context.ReturnType!), entry);
             return true;
         }
         catch
@@ -376,6 +379,11 @@ public class FileCacheAttribute : MoAttribute
             return null;
         }
 
+        if (string.IsNullOrEmpty(entry.Json))
+        {
+            return null;
+        }
+
         Type? actualType = string.IsNullOrEmpty(entry.TypeName)
             ? null
             : Type.GetType(entry.TypeName, false);
@@ -390,7 +398,7 @@ public class FileCacheAttribute : MoAttribute
 
     private void ReplaceReturnValue(MethodContext context, object? value)
     {
-        if (TryGetTaskResultType(context.ReturnType, out Type? taskResultType) && taskResultType is not null)
+        if (TryGetTaskResultType(context.ReturnType!, out Type? taskResultType) && taskResultType is not null)
         {
             MethodInfo fromResult = typeof(Task).GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .First(m => m.Name == nameof(Task.FromResult) && m.IsGenericMethodDefinition && m.GetParameters().Length == 1)
@@ -405,11 +413,11 @@ public class FileCacheAttribute : MoAttribute
                     NeoAdminJson.Settings);
             }
 
-            context.ReplaceReturnValue(this, fromResult.Invoke(null, [typedValue]));
+            context.ReplaceReturnValue(this, fromResult.Invoke(null, [typedValue])!);
             return;
         }
 
-        context.ReplaceReturnValue(this, value);
+        context.ReplaceReturnValue(this, value!);
     }
 
     private static void SafeDelete(string filePath)

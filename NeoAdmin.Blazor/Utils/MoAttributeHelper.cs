@@ -64,10 +64,10 @@ internal static class MoAttributeHelper
     {
         if (context.HasReturnValue)
         {
-            context.ReplaceReturnValue(mo, value ?? CreateDefaultReturnValue(context.ReturnType));
+            context.ReplaceReturnValue(mo, value ?? CreateDefaultReturnValue(context.ReturnType!)!);
             return;
         }
 
-        context.ReplaceReturnValue(mo, null);
+        context.ReplaceReturnValue(mo, CreateDefaultReturnValue(context.ReturnType!)!);
     }
 }

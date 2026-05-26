@@ -31,6 +31,11 @@ public class NovaButtonAttribute : MoAttribute
             return;
         }
 
+        if (context.Target is null || context.Method is null)
+        {
+            return;
+        }
+
         Type type = context.Target.GetType();
         if (MoAttributeHelper.GetPropertyOrFieldValue(type, context.Target, "ServiceProvider") is not IServiceProvider provider)
         {

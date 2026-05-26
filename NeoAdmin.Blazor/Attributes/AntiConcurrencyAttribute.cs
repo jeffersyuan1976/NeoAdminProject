@@ -30,6 +30,11 @@ public class AntiConcurrencyAttribute : MoAttribute
             return;
         }
 
+        if (context.Target is null || context.Method is null)
+        {
+            return;
+        }
+
         Type type = context.Target.GetType();
         if (MoAttributeHelper.GetPropertyOrFieldValue(type, context.Target, "ServiceProvider") is not IServiceProvider provider)
         {
@@ -38,7 +43,7 @@ public class AntiConcurrencyAttribute : MoAttribute
 
         _scopeState = provider.GetRequiredService<NeoAdminScopeState>();
         _scheduler = provider.GetRequiredService<Scheduler>();
-        _concurrencyKey = context.Method.DeclaringType!.FullName + "." + context.Method.Name;
+        _concurrencyKey = $"{context.Method.DeclaringType?.FullName ?? type.FullName}.{context.Method.Name}";
 
         if (_scopeState.Bags.ContainsKey(_concurrencyKey))
         {

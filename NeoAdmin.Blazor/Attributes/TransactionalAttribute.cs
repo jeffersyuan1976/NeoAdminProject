@@ -53,6 +53,11 @@ public class TransactionalAttribute : MoAttribute
             return;
         }
 
+        if (context.Target is null || context.Method is null)
+        {
+            return;
+        }
+
         Type type = context.Target.GetType();
         IServiceProvider? serviceProvider = AdminOmniServiceProvider.Value
             ?? MoAttributeHelper.GetPropertyOrFieldValue(type, context.Target, "ServiceProvider") as IServiceProvider;

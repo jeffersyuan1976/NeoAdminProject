@@ -541,6 +541,8 @@
                 await LoadFromDatabaseAsync();
             }
 
+            SyncSelectedRowsFromSelectedKeys();
+
             Logger.LogInformation(
             "查询 {Entity} 完成：第 {PageNumber} 页，每页 {PageSize} 条，共 {Total} 条，搜索={SearchText}",
             typeof(TItem).Name,
@@ -568,6 +570,31 @@
         }
 
         StateHasChanged();
+    }
+
+    private void SyncSelectedRowsFromSelectedKeys()
+    {
+        if (SelectionKey is null || SelectedKeys is null || SelectedKeys.Count == 0)
+        {
+            return;
+        }
+
+        if (!KeepSelectionOnPaging && !IsPickerMode)
+        {
+            return;
+        }
+
+        try
+        {
+            _isSyncingPickerSelection = true;
+            selectedRows = rows
+            .Where(row => SelectedKeys.Contains(SelectionKey(row.Item)))
+            .ToList();
+        }
+        finally
+        {
+            _isSyncingPickerSelection = false;
+        }
     }
 
 
