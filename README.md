@@ -219,25 +219,29 @@ app.MapRazorComponents<YourApp>()
 
 ## 发布到 NuGet（GitHub Actions）
 
-仓库已配置 [`.github/workflows/publish-nuget.yml`](.github/workflows/publish-nuget.yml)：推送 **`v*` 标签**（如 `v1.0.0`）时，会自动打包并推送 **NeoAdmin.Blazor** 与 **NeoAdmin.Templates** 到 [nuget.org](https://www.nuget.org)。
+仓库已配置 [`.github/workflows/publish-nuget.yml`](.github/workflows/publish-nuget.yml)：推送 **`v*` 标签**（如 `v1.0.1`）时，会自动打包并推送 **NeoAdmin.Blazor** 与 **NeoAdmin.Templates** 到 [nuget.org](https://www.nuget.org)。流水线用**标签号**作为 NuGet 版本（`v1.0.1` → `1.0.1`），但建议仓库内下列位置与标签保持一致，避免本地打包与模板引用错乱。
 
-**一次性配置**
+**发版前需统一的版本（以 `1.0.1` 为例）**
 
-1. 在 [nuget.org](https://www.nuget.org/account/apikeys) 创建 API Key（权限 Push，可限定包 ID）。
-2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions** 添加 `NUGET_API_KEY`。
-3. 发版前确认 `NeoAdmin.Templates/content/NeoAdminApp/NeoAdminApp.csproj` 里 `NeoAdmin.Blazor` 的 `Version` 与本次标签版本一致。
+| 位置 | 字段 |
+|------|------|
+| `NeoAdmin.Blazor/NeoAdmin.Blazor.csproj` | `<Version>` |
+| `NeoAdmin.Templates/NeoAdmin.Templates.csproj` | `<Version>` |
+| `NeoAdmin.Templates/content/NeoAdminApp/NeoAdminApp.csproj` | `PackageReference` → `NeoAdmin.Blazor` 的 `Version` |
+| Git 标签 | `v1.0.1`（与上面数字一致，带前缀 `v`） |
 
 **发版命令**
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git push origin main
+git tag v1.0.1
+git push origin v1.0.1
 ```
 
 在 **Actions** 页查看流水线；成功后安装：
 
 ```bash
-dotnet new install NeoAdmin.Templates --version 1.0.0
+dotnet new install NeoAdmin.Templates --version 1.0.1
 dotnet new neoadmin -n MyApp -o .
 ```
 
