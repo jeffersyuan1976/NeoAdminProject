@@ -245,7 +245,7 @@
 <Dialog @bind-Open="deleteOpen">
     <DialogContent Class="sm:max-w-md">
         <DialogHeader>
-            <DialogTitle>确认@RemoveText</DialogTitle>
+            <DialogTitle>@($"确认{RemoveText}")</DialogTitle>
             <DialogDescription>确定要删除此条记录吗？该操作不可撤销。</DialogDescription>
         </DialogHeader>
         <DialogFooter Class="mt-4">
@@ -262,7 +262,7 @@
 <Dialog @bind-Open="batchDeleteOpen">
     <DialogContent Class="sm:max-w-md">
         <DialogHeader>
-            <DialogTitle>确认批量@RemoveText</DialogTitle>
+            <DialogTitle>@($"确认批量{RemoveText}")</DialogTitle>
             <DialogDescription>确定要删除 @batchDeleteTargets.Count 行记录吗？删除之后无法恢复。</DialogDescription>
         </DialogHeader>
         <DialogFooter Class="mt-4">
@@ -829,22 +829,26 @@
     private async Task HandleConfirmDeleteClick()
     {
         if (deleteTarget == null) return;
-        await DeleteItemsAsync(new List<TItem> { deleteTarget }, single: true);
-        deleteOpen = false;
-        deleteTarget = null;
+        if (await DeleteItemsAsync(new List<TItem> { deleteTarget }, single: true))
+        {
+            deleteOpen = false;
+            deleteTarget = null;
+        }
     }
 
     private async Task HandleConfirmBatchDeleteClick()
     {
         if (batchDeleteTargets.Count == 0) return;
-        await DeleteItemsAsync(batchDeleteTargets, single: false);
-        batchDeleteOpen = false;
-        batchDeleteTargets.Clear();
+        if (await DeleteItemsAsync(batchDeleteTargets, single: false))
+        {
+            batchDeleteOpen = false;
+            batchDeleteTargets.Clear();
+        }
     }
 
-    private async Task DeleteItemsAsync(List<TItem> items, bool single)
+    private async Task<bool> DeleteItemsAsync(List<TItem> items, bool single)
     {
-        if (items.Count == 0) return;
+        if (items.Count == 0) return false;
 
         if (IsWorkflowAudit)
         {
@@ -852,7 +856,7 @@
             if (locked is not null)
             {
                 ToastService.Error(RemoveText, "正在审批中，无法删除！");
-                return;
+                return false;
             }
         }
 
@@ -860,21 +864,21 @@
         if (blockMessage is not null)
         {
             ToastService.Error(RemoveText, blockMessage);
-            return;
+            return false;
         }
 
         if (single && OnRemoving.HasDelegate)
         {
             CrudConfirmEventArgs<TItem> confirmArgs = new(items[0]);
             await OnRemoving.InvokeAsync(confirmArgs);
-            if (confirmArgs.Cancel) return;
+            if (confirmArgs.Cancel) return false;
         }
 
         if (!single && OnBatchRemoving.HasDelegate)
         {
             CrudBatchConfirmEventArgs<TItem> confirmArgs = new(items);
             await OnBatchRemoving.InvokeAsync(confirmArgs);
-            if (confirmArgs.Cancel) return;
+            if (confirmArgs.Cancel) return false;
         }
 
         foreach (TItem item in items)
@@ -882,7 +886,7 @@
             if (!await DeleteEntityAsync(item))
             {
                 Logger.LogWarning("删除 {Entity} 失败：{EntityDesc}", typeof(TItem).Name, EntityLogHelper.Describe(item));
-                return;
+                return false;
             }
 
             Logger.LogInformation("删除 {Entity} 成功：{EntityDesc}", typeof(TItem).Name, EntityLogHelper.Describe(item));
@@ -900,6 +904,7 @@
 
         selectedRows.Clear();
         await LoadAsync();
+        return true;
     }
 
     private async Task<string?> GetBuiltInDeleteBlockMessageAsync(IReadOnlyList<TItem> items)

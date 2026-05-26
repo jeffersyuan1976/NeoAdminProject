@@ -13,7 +13,7 @@ namespace NeoAdmin.Jobs;
 public static class IpWhitelistJobs
 {
     /// <summary>
-    /// 每 5 分钟清空 IP 白名单表。
+    /// 每 5 分钟将全部 IP 白名单设为禁用（不删除记录）。
     /// </summary>
     [Scheduler("ip-whitelist.clear", "0 */5 * * * *")]
     public static async Task ClearIpWhitelist(IServiceProvider serviceProvider, TaskInfo task)
@@ -23,8 +23,11 @@ public static class IpWhitelistJobs
 
         logger.LogInformation("ClearIpWhitelist 开始，TaskId={TaskId}", task.Id);
 
-        int deleted = await freeSql.Delete<SysIpWhitelist>().ExecuteAffrowsAsync();
+        int disabled = await freeSql.Update<SysIpWhitelist>()
+            .Set(a => a.IsEnabled, false)
+            .Where(a => a.IsEnabled)
+            .ExecuteAffrowsAsync();
 
-        logger.LogInformation("ClearIpWhitelist 完成，删除行数={Deleted}", deleted);
+        logger.LogInformation("ClearIpWhitelist 完成，禁用行数={Disabled}", disabled);
     }
 }

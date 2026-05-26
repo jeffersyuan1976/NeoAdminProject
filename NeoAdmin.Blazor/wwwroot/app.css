@@ -15,6 +15,10 @@
   --selection: color-mix(in oklch, var(--primary) 30%, transparent);
   --selection-foreground: var(--foreground);
 
+  /* destructive：Toast.Error、Button Destructive、Alert Destructive 等；分片主题未内置 */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+
   /* Alert 语义色：NeoUI.Blazor 组件引用这些变量，但主题包未内置，需应用层补齐 */
   --alert-success: oklch(0.55 0.20 142);
   --alert-success-foreground: oklch(0.30 0.09 142);
@@ -44,6 +48,9 @@
 }
 
 .dark {
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+
   --alert-success: oklch(0.60 0.18 142);
   --alert-success-foreground: oklch(0.90 0.06 142);
   --alert-success-bg: oklch(0.18 0.008 142);

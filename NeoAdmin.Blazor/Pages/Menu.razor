@@ -6,6 +6,7 @@
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Menus
 @inject MenuService MenuService
+@inject IToastService ToastService
 
 <PageTitle>菜单管理</PageTitle>
 
@@ -267,10 +268,12 @@
         if (!result.Succeeded)
         {
             ShowError(result.Message);
+            ToastService.Error("删除失败", result.Message);
             return false;
         }
 
         ShowSuccess(result.Message);
+        ToastService.Success("删除成功", result.Message);
         return true;
     }
 
