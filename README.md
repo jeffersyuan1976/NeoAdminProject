@@ -221,27 +221,29 @@ app.MapRazorComponents<YourApp>()
 
 仓库已配置 [`.github/workflows/publish-nuget.yml`](.github/workflows/publish-nuget.yml)：推送 **`v*` 标签**（如 `v1.0.1`）时，会自动打包并推送 **NeoAdmin.Blazor** 与 **NeoAdmin.Templates** 到 [nuget.org](https://www.nuget.org)。流水线用**标签号**作为 NuGet 版本（`v1.0.1` → `1.0.1`），但建议仓库内下列位置与标签保持一致，避免本地打包与模板引用错乱。
 
-**发版命令**
+**发布新版本**
 
-> 发版前需统一的版本（以 `1.0.1` 为例）
+1. 将下表 **4 处** 改为同一版本号（示例：`1.0.2` / `v1.0.2`）。
+2. 提交并推送 `main`，再打标签触发 NuGet 发布。
 
 | 位置 | 字段 |
 |------|------|
-| `NeoAdmin.Blazor/NeoAdmin.Blazor.csproj` | `<Version>` |
+| `NeoAdmin.Blazor/NeoAdmin.Blazor.csproj` | `<Version>`（建议在 `PropertyGroup` 首行） |
 | `NeoAdmin.Templates/NeoAdmin.Templates.csproj` | `<Version>` |
 | `NeoAdmin.Templates/content/NeoAdminApp/NeoAdminApp.csproj` | `PackageReference` → `NeoAdmin.Blazor` 的 `Version` |
-| Git 标签 | `v1.0.1`（与上面数字一致，带前缀 `v`） |
+| Git 标签 | `v*`（如 `v1.0.2`，数字与上表一致） |
 
 ```bash
 git push origin main
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 在 **Actions** 页查看流水线；成功后安装：
 
 ```bash
-dotnet new install NeoAdmin.Templates --version 1.0.1
+dotnet new install NeoAdmin.Templates
+# 或锁定版本：dotnet new install NeoAdmin.Templates --version 1.0.2
 dotnet new neoadmin -n MyApp -o .
 ```
 
