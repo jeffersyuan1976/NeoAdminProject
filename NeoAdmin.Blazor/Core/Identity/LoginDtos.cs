@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace NeoAdmin.Blazor.Auth;
+namespace NeoAdmin.Blazor.Core.Identity;
 
 public sealed class LoginRequest
 {

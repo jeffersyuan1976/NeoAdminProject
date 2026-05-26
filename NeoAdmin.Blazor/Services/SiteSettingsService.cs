@@ -1,6 +1,6 @@
 using FreeSql;
 using Microsoft.Extensions.Logging;
-using NeoAdmin.Blazor.Auth;
+using NeoAdmin.Blazor.Core.Identity;
 using NeoAdmin.Blazor.Entities;
 using NeoAdmin.Blazor.SeedData;
 using NeoAdmin.Blazor.Utils;

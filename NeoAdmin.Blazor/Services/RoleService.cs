@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using FreeSql;
 using Microsoft.Extensions.Logging;
-using NeoAdmin.Blazor.Auth;
+using NeoAdmin.Blazor.Core.Identity;
 using NeoAdmin.Blazor.Entities;
-using NeoAdmin.Blazor.Menus;
+using NeoAdmin.Blazor.Core.Navigation;
 using NeoAdmin.Blazor.Utils;
 
 namespace NeoAdmin.Blazor.Services;

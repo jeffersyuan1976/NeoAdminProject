@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using NeoAdmin.Blazor.Entities;
 
-namespace NeoAdmin.Blazor.Auth;
+namespace NeoAdmin.Blazor.Core.Identity;
 
 public sealed class NeoAdminAuthService
 {

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using NeoAdmin.Blazor.Entities;
 
-namespace NeoAdmin.Blazor.Menus;
+namespace NeoAdmin.Blazor.Core.Navigation;
 
 public sealed class MenuEditModel
 {

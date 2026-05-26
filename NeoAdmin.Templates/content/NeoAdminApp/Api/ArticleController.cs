@@ -2,7 +2,7 @@ using FreeSql;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NeoAdminApp.Api.Dto;
-using NeoAdmin.Blazor.Auth;
+using NeoAdmin.Blazor.Core.Identity;
 using NeoAdminApp.Entities.Blog;
 using BlogArticle = NeoAdminApp.Entities.Blog.Article;
 

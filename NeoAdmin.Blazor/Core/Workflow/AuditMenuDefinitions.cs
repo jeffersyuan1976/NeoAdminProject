@@ -1,6 +1,6 @@
 using NeoAdmin.Blazor.Entities;
 
-namespace NeoAdmin.Blazor.Audit;
+namespace NeoAdmin.Blazor.Core.Workflow;
 
 public static class AuditMenuDefinitions
 {

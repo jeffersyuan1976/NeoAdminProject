@@ -4,7 +4,7 @@ using FreeSql;
 using NeoAdmin.Blazor.Attributes;
 using Yitter.IdGenerator;
 
-namespace NeoAdmin.Blazor.Scheduling;
+namespace NeoAdmin.Blazor.Core.Scheduling;
 
 internal static class SchedulerAttributeRegistration
 {

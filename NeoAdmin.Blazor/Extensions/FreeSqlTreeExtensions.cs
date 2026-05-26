@@ -8,6 +8,12 @@ public static class FreeSqlTreeExtensions
     /// <summary>
     /// 将平铺列表转为带 Level 的树形展示项（用于下拉、分配列表缩进）。
     /// </summary>
+    /// <example>
+    /// <code>
+    /// var items = orgList.ToNeoAdminItemList(FreeSql);
+    /// // items[0].Level == 1，子节点 Level 递增，供 NeoSelect 缩进展示
+    /// </code>
+    /// </example>
     public static List<NeoAdminItem<TItem>> ToNeoAdminItemList<TItem>(
         this List<TItem> list,
         IFreeSql freeSql)

@@ -2,7 +2,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using NeoAdmin.Blazor.Entities;
-using NeoAdmin.Blazor.Menus;
+using NeoAdmin.Blazor.Core.Navigation;
 using NeoAdmin.Blazor.Services;
 using NeoAdmin.Blazor.Utils;
 using NeoUI.Blazor;

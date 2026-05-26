@@ -1,7 +1,7 @@
 using NeoAdmin.Blazor.Entities;
 using NeoUI.Blazor;
 
-namespace NeoAdmin.Blazor.Audit;
+namespace NeoAdmin.Blazor.Core.Workflow;
 
 public static class AuditWorkflowRules
 {

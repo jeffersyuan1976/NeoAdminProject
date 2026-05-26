@@ -1,7 +1,7 @@
 using FreeSql;
-using NeoAdmin.Blazor.Audit;
+using NeoAdmin.Blazor.Core.Workflow;
 using NeoAdmin.Blazor.Entities;
-using NeoAdmin.Blazor.Menus;
+using NeoAdmin.Blazor.Core.Navigation;
 
 namespace NeoAdmin.Blazor.SeedData;
 

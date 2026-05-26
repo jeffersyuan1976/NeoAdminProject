@@ -1,10 +1,10 @@
 using System.Text.Json;
 using FreeSql;
 using Microsoft.JSInterop;
-using NeoAdmin.Blazor.Audit;
-using NeoAdmin.Blazor.Auth;
+using NeoAdmin.Blazor.Core.Workflow;
+using NeoAdmin.Blazor.Core.Identity;
 using NeoAdmin.Blazor.Entities;
-using NeoAdmin.Blazor.Menus;
+using NeoAdmin.Blazor.Core.Navigation;
 
 namespace NeoAdmin.Blazor.Services;
 

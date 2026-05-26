@@ -33,6 +33,18 @@ app.MapRazorComponents<YourApp>()
 
 推荐使用 [NeoAdmin.Templates](https://www.nuget.org/packages/NeoAdmin.Templates) 通过 `dotnet new neoadmin` 生成完整宿主项目。
 
+## 核心模块目录（`Core/`）
+
+按功能划分的平台能力，避免根目录散落多个小文件夹：
+
+| 路径 | 命名空间 | 职责 |
+|------|----------|------|
+| `Core/Identity/` | `NeoAdmin.Blazor.Core.Identity` | 登录、Token、API 统一返回体 |
+| `Core/Authorization/` | `NeoAdmin.Blazor.Core.Authorization` | REST API 路径权限过滤器 |
+| `Core/Navigation/` | `NeoAdmin.Blazor.Core.Navigation` | 菜单树、路径解析、菜单 CRUD |
+| `Core/Workflow/` | `NeoAdmin.Blazor.Core.Workflow` | 审批流规则与审批按钮定义 |
+| `Core/Scheduling/` | `NeoAdmin.Blazor.Core.Scheduling` | FreeScheduler 注册与任务同步 |
+
 ## 文档与源码
 
 - 仓库：<https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject>

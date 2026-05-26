@@ -1,10 +1,10 @@
 @page "/admin/menu"
 @layout LayoutAdmin
-@using NeoAdmin.Blazor.Audit
-@using NeoAdmin.Blazor.Auth
+@using NeoAdmin.Blazor.Core.Workflow
+@using NeoAdmin.Blazor.Core.Identity
 @using NeoAdmin.Blazor.Components
 @using NeoAdmin.Blazor.Entities
-@using NeoAdmin.Blazor.Menus
+@using NeoAdmin.Blazor.Core.Navigation
 @inject MenuService MenuService
 @inject IToastService ToastService
 
@@ -33,11 +33,12 @@
                IsEdit="true"
                IsRemove="true"
                IsRefresh="true"
+               InitQuery="InitQuery"
+               OnQuery="HandleQuery"
                LoadFunc="LoadMenusAsync"
                OnSaveAsync="HandleSaveAsync"
                OnDeleteAsync="HandleDeleteAsync"
-               OnEdit="HandleOnEdit"
-               ToolbarContent="ToolbarFragment">
+               OnEdit="HandleOnEdit">
         <Columns>
             <DataTableColumn TData="CrudGridRow<SysMenu>"
                              TValue="long"
@@ -213,20 +214,62 @@
     private string? message;
     private AlertVariant messageVariant = AlertVariant.Default;
 
-    private const string TypeFilterDefault = "default";
-    private const string TypeFilterAll = "all";
-    private const string TypeFilterMenu = "menu";
-    private const string TypeFilterCrud = "crud";
-    private const string TypeFilterButton = "button";
-    private const string TypeFilterApi = "api";
-    private string typeFilter = TypeFilterDefault;
+    private Task InitQuery(CrudQueryInfo e)
+    {
+        e.Filters =
+        [
+            new CrudFilterInfo("类型", "Type", typeof(SysMenuType), multiple: true, col: 8),
+            new CrudFilterInfo("隐藏", "IsHidden", false, 4, "是,否", "true,false"),
+            new CrudFilterInfo("折叠", "Collapsed", false, 4, "是,否", "true,false")
+        ];
+        return Task.CompletedTask;
+    }
+
+    private void HandleQuery(CrudQueryEventArgs<SysMenu> e)
+    {
+        if (e.Queryable is null)
+        {
+            return;
+        }
+
+        IQueryable<SysMenu> query = e.Queryable;
+
+        CrudFilterInfo typeFilter = e.Filters.First(f => f.QueryStringName == "Type");
+        if (typeFilter.HasValue)
+        {
+            SysMenuType[] types = typeFilter.Values<SysMenuType>();
+            query = query.Where(a => types.Contains(a.Type));
+        }
+        else
+        {
+            query = query.Where(a => !a.Type.IsPermissionNode());
+        }
+
+        CrudFilterInfo hiddenFilter = e.Filters.First(f => f.QueryStringName == "IsHidden");
+        if (hiddenFilter.HasValue)
+        {
+            bool isHidden = hiddenFilter.Value<bool>();
+            query = query.Where(a => a.IsHidden == isHidden);
+        }
+
+        CrudFilterInfo collapsedFilter = e.Filters.First(f => f.QueryStringName == "Collapsed");
+        if (collapsedFilter.HasValue)
+        {
+            bool collapsed = collapsedFilter.Value<bool>();
+            query = collapsed
+                ? query.Where(a => a.SidebarStyle == SysMenuSidebarStyle.收起)
+                : query.Where(a => a.SidebarStyle != SysMenuSidebarStyle.收起);
+        }
+
+        e.Queryable = query;
+    }
 
     private async Task<List<SysMenu>> LoadMenusAsync()
     {
         flatMenus = await MenuService.GetAllAsync();
         List<SysMenu> tree = MenuService.BuildTree(flatMenus);
         menuLevels = BuildLevels(tree);
-        return FilterRows(FlattenRows(tree));
+        return FlattenRows(tree);
     }
 
     private async Task<bool> HandleSaveAsync(SysMenu item, bool isNewItem)
@@ -321,25 +364,6 @@
     private bool HasAuditButtons(long menuId) =>
         flatMenus.Any(a => a.ParentId == menuId && AuditMenuDefinitions.AllButtonPaths.Contains(a.Path));
 
-    private async Task HandleTypeFilterChanged(string value)
-    {
-        typeFilter = string.IsNullOrWhiteSpace(value) ? TypeFilterDefault : value;
-        await table.LoadAsync();
-    }
-
-    private List<SysMenu> FilterRows(List<SysMenu> source)
-    {
-        return typeFilter switch
-        {
-            TypeFilterAll => source,
-            TypeFilterMenu => source.Where(a => a.Type == SysMenuType.菜单).ToList(),
-            TypeFilterCrud => source.Where(a => a.Type == SysMenuType.增删改查).ToList(),
-            TypeFilterButton => source.Where(a => a.Type == SysMenuType.按钮).ToList(),
-            TypeFilterApi => source.Where(a => a.Type == SysMenuType.接口).ToList(),
-            _ => source.Where(a => !a.Type.IsPermissionNode()).ToList()
-        };
-    }
-
     private SysMenu? FindMenu(long id)
     {
         return flatMenus.FirstOrDefault(a => a.Id == id);
@@ -418,26 +442,6 @@
     {
         message = null;
     }
-
-    private RenderFragment ToolbarFragment => __builder =>
-    {
-        <Select TValue="string"
-                Class="w-[280px]"
-                Value="@typeFilter"
-                ValueChanged="HandleTypeFilterChanged">
-            <SelectTrigger>
-                <SelectValue Placeholder="选择类型筛选" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem Value="@TypeFilterDefault" TValue="string">类型：菜单 + 增删改查</SelectItem>
-                <SelectItem Value="@TypeFilterAll" TValue="string">类型：全部</SelectItem>
-                <SelectItem Value="@TypeFilterMenu" TValue="string">类型：菜单</SelectItem>
-                <SelectItem Value="@TypeFilterCrud" TValue="string">类型：增删改查</SelectItem>
-                <SelectItem Value="@TypeFilterButton" TValue="string">类型：按钮</SelectItem>
-                <SelectItem Value="@TypeFilterApi" TValue="string">类型：接口</SelectItem>
-            </SelectContent>
-        </Select>
-    };
 
     private async Task CreateRootMenu()
     {

@@ -1,7 +1,7 @@
 using FreeScheduler;
 using FreeSql;
 
-namespace NeoAdmin.Blazor.Scheduling;
+namespace NeoAdmin.Blazor.Core.Scheduling;
 
 internal static class FreeSqlSchedulerSetup
 {

@@ -10,6 +10,13 @@ public static class NeoAdminSerilogExtensions
     private const string OutputTemplate =
         "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}";
 
+    /// <summary>注册 Serilog：控制台 + 按日滚动的 Logs/admin-.log。</summary>
+    /// <example>
+    /// <code>
+    /// var builder = WebApplication.CreateBuilder(args);
+    /// builder.AddNeoAdminSerilog();
+    /// </code>
+    /// </example>
     public static WebApplicationBuilder AddNeoAdminSerilog(this WebApplicationBuilder builder)
     {
         string logsPath = Path.Combine(AppContext.BaseDirectory, "Logs");
@@ -36,6 +43,14 @@ public static class NeoAdminSerilogExtensions
         return builder;
     }
 
+    /// <summary>启用 HTTP 请求耗时日志。</summary>
+    /// <example>
+    /// <code>
+    /// var app = builder.Build();
+    /// app.UseNeoAdminSerilogRequestLogging();
+    /// // 日志示例：HTTP GET /api/menu responded 200 in 12.3456 ms
+    /// </code>
+    /// </example>
     public static WebApplication UseNeoAdminSerilogRequestLogging(this WebApplication app)
     {
         app.UseSerilogRequestLogging(options =>

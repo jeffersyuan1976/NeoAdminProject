@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
-using NeoAdmin.Blazor.Auth;
-using NeoAdmin.Blazor.Menus;
+using NeoAdmin.Blazor.Core.Identity;
+using NeoAdmin.Blazor.Core.Navigation;
 using NeoAdmin.Blazor.Services;
 
-namespace NeoAdmin.Blazor.Mvc;
+namespace NeoAdmin.Blazor.Core.Authorization;
 
 /// <summary>
 /// API 路径权限过滤器（对齐旧版 AdminOmniFilter）。

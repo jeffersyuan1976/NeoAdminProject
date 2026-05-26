@@ -1,4 +1,4 @@
-namespace NeoAdmin.Blazor.Menus;
+namespace NeoAdmin.Blazor.Core.Navigation;
 
 /// <summary>
 /// 菜单路径规范化与比较（对齐旧版 AuthPath 的大小写与斜杠规则）。

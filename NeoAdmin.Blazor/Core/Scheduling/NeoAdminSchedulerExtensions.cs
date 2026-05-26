@@ -5,9 +5,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NCrontab;
 using NeoAdmin.Blazor.Data;
-using NeoAdmin.Blazor.Scheduling;
 
-namespace NeoAdmin.Blazor.Scheduling;
+namespace NeoAdmin.Blazor.Core.Scheduling;
 
 public static class NeoAdminSchedulerExtensions
 {
