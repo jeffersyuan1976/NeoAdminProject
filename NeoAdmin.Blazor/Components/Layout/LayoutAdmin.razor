@@ -14,6 +14,7 @@
 @using NeoAdmin.Blazor.SeedData
 @using NeoAdmin.Blazor.Services
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
 @inject MenuService MenuService
 @inject MenuPermissionService MenuPermission
 
@@ -270,7 +271,7 @@
         }
 
         isAuthChecked = true;
-        UpdatePageTitle();
+        await UpdatePageTitleAsync();
         StateHasChanged();
     }
 
@@ -278,7 +279,6 @@
     {
         NavigationManager.LocationChanged += OnLocationChanged;
         SiteSettingsService.SettingsChanged += OnSiteSettingsChanged;
-        UpdatePageTitle();
     }
 
     private void OnSiteSettingsChanged()
@@ -299,17 +299,82 @@
                 return;
             }
 
-            UpdatePageTitle();
+            await UpdatePageTitleAsync();
             StateHasChanged();
         });
     }
 
-    private void UpdatePageTitle()
+    private async Task UpdatePageTitleAsync()
     {
-        string path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
-        pageTitle = string.IsNullOrWhiteSpace(path) || path.Equals("Admin", StringComparison.OrdinalIgnoreCase)
-            ? "控制台"
-            : path.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+        string relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
+        if (string.IsNullOrWhiteSpace(relativePath) || relativePath.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "控制台";
+            return;
+        }
+
+        string pathOnly = relativePath.Split('?', 2)[0];
+        string pagePath = MenuPathHelper.NormalizePagePath("/" + pathOnly);
+        string? tabValue = GetTabQueryValue();
+
+        if (!string.IsNullOrWhiteSpace(tabValue))
+        {
+            PageSearchTabSeedData.Entry? tabEntry = PageSearchTabSeedData.Entries
+                .FirstOrDefault(entry =>
+                    MenuPathHelper.PathsEqual(entry.PagePath, pagePath)
+                    && string.Equals(entry.TabValue, tabValue, StringComparison.OrdinalIgnoreCase));
+
+            if (tabEntry is not null)
+            {
+                string baseLabel = await ResolvePageLabelAsync(pagePath);
+                pageTitle = $"{baseLabel} / {tabEntry.TabLabel}";
+                return;
+            }
+        }
+
+        pageTitle = await ResolvePageLabelAsync(pagePath);
+    }
+
+    private async Task<string> ResolvePageLabelAsync(string pagePath)
+    {
+        if (isAuthChecked)
+        {
+            SysMenu? menu = await MenuPermission.TryGetPageMenuAsync(pagePath);
+            if (menu is not null && !string.IsNullOrWhiteSpace(menu.Label))
+            {
+                return menu.Label;
+            }
+        }
+
+        string? searchLabel = GetPageSearchLabel(pagePath);
+        if (!string.IsNullOrWhiteSpace(searchLabel))
+        {
+            return searchLabel;
+        }
+
+        string relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
+        return relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+    }
+
+    private string? GetPageSearchLabel(string pagePath)
+    {
+        string normalized = NormalizeSearchPath(pagePath);
+        return pageSearchEntries
+            .FirstOrDefault(entry => string.Equals(NormalizeSearchPath(entry.Href), normalized, StringComparison.OrdinalIgnoreCase))
+            ?.Label;
+    }
+
+    private string? GetTabQueryValue()
+    {
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (string.IsNullOrWhiteSpace(uri.Query))
+        {
+            return null;
+        }
+
+        return QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out Microsoft.Extensions.Primitives.StringValues values)
+            ? values.FirstOrDefault()
+            : null;
     }
 
     private string GetDisplayName()
