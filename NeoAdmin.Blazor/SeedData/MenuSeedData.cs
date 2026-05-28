@@ -130,17 +130,6 @@ public static class MenuSeedData
             current = Copy(target, parentId);
             freeSql.Insert(current).ExecuteAffrows();
         }
-        else
-        {
-            freeSql.Update<SysMenu>()
-                .Where(a => a.Id == current.Id)
-                .Set(a => a.Icon, target.Icon)
-                .Set(a => a.Type, target.Type)
-                .Set(a => a.SidebarStyle, target.SidebarStyle)
-                .Set(a => a.IsHidden, target.IsHidden)
-                .Set(a => a.IsSystem, target.IsSystem)
-                .ExecuteAffrows();
-        }
 
         foreach (SysMenu child in target.Children)
         {

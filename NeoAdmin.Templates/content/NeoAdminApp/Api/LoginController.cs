@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using FreeSql;
 using Microsoft.AspNetCore.Authorization;
@@ -17,8 +16,6 @@ namespace NeoAdminApp.Api;
 [Tags("账号接口")]
 public sealed class LoginController : BaseApiController
 {
-    private static readonly ConcurrentDictionary<string, int> LoginLimit = new();
-
     public LoginController(
         IFreeSql freeSql,
         NeoAdminAuthService auth,
@@ -124,59 +121,27 @@ public sealed class LoginController : BaseApiController
             return ApiResult<LoginResponse>.Error(validationError.Message, validationError.Code);
         }
 
-        string ip = GetClientIpAddress();
-        if (LoginLimit.TryGetValue(ip, out int count) && count >= 5)
+        ApiResult<LoginResponse> result = await Auth.LoginAsync(request);
+        if (!result.Succeeded || result.Data is null)
         {
-            return ApiResult<LoginResponse>.Error($"{ip} 操作频率过高，请稍后再试...");
+            return result;
         }
 
-        SysUser? user = await FreeSql.Select<SysUser>()
-            .IncludeMany(a => a.Roles)
-            .Where(a => a.Username == request.Username.Trim())
-            .FirstAsync();
-
-        if (user is null || !string.Equals(user.Password, request.Password, StringComparison.Ordinal))
-        {
-            count = LoginLimit.AddOrUpdate(ip, 1, (_, oldValue) => oldValue + 1);
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(TimeSpan.FromSeconds(60));
-                LoginLimit.TryRemove(ip, out _);
-            });
-            await WriteLoginLogAsync(request.Username, SysUserLoginLog.LogType.登陆失败, $"failed:{count}");
-            return ApiResult<LoginResponse>.Error($"用户名或密码错误，当前限制次数：{count}");
-        }
-
-        if (!user.IsEnabled)
-        {
-            await WriteLoginLogAsync(user.Username, SysUserLoginLog.LogType.登陆失败, "disabled");
-            return ApiResult<LoginResponse>.Error("账户已被禁用");
-        }
-
-        user.LoginTime = DateTime.Now;
-        await FreeSql.Update<SysUser>()
-            .Where(a => a.Id == user.Id)
-            .Set(a => a.LoginTime, user.LoginTime)
-            .ExecuteAffrowsAsync();
-
-        await WriteLoginLogAsync(user.Username, SysUserLoginLog.LogType.登陆成功);
-
-        List<string> roleNames = user.Roles?.Select(a => a.Name).ToList()
-            ?? await GetRoleNamesAsync(user.Id);
+        List<string> roleNames = await GetRoleNamesAsync(result.Data.User.Id);
 
         return ApiResult<LoginResponse>.Success(new LoginResponse
         {
-            Token = BuildToken(user),
+            Token = result.Data.Token,
             User = new UserSummaryResponse
             {
-                Id = user.Id,
-                Username = user.Username,
-                Nickname = user.Nickname,
-                IsEnabled = user.IsEnabled,
-                LoginTime = user.LoginTime,
+                Id = result.Data.User.Id,
+                Username = result.Data.User.Username,
+                Nickname = result.Data.User.Nickname,
+                IsEnabled = result.Data.User.IsEnabled,
+                LoginTime = result.Data.User.LoginTime,
                 Roles = roleNames
             }
-        }, "登录成功");
+        }, result.Message);
     }
 
     /// <summary>

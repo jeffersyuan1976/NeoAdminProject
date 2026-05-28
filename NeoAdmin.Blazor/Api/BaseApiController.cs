@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NeoAdmin.Blazor.Core.Identity;
 using NeoAdmin.Blazor.Entities;
+using NeoAdmin.Blazor.Utils;
 
 namespace NeoAdmin.Blazor.Api;
 
@@ -32,18 +33,10 @@ public abstract class BaseApiController : ControllerBase
     }
 
     /// <summary>
-    /// 获取客户端 IP。
+    /// 获取客户端 IP（委托 <see cref="IpHelper.GetClientIpAddress"/>）。
     /// </summary>
-    protected string GetClientIpAddress()
-    {
-        string? forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwardedFor))
-        {
-            return forwardedFor.Split(',')[0].Trim();
-        }
-
-        return HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "0.0.0.0";
-    }
+    protected string GetClientIpAddress() =>
+        IpHelper.GetClientIpAddress(HttpContext, Logger);
 
     /// <summary>
     /// 从 Authorization 头提取 Bearer Token。

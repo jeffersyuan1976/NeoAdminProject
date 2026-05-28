@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using NeoAdmin.Blazor.Entities;
+using NeoAdmin.Blazor.Utils;
 
 namespace NeoAdmin.Blazor.Core.Identity;
 
@@ -12,17 +13,20 @@ public sealed class NeoAdminAuthService
     private readonly IFreeSql freeSql;
     private readonly IDataProtector tokenProtector;
     private readonly IHttpContextAccessor httpContextAccessor;
+    private readonly LoginRateLimiter loginRateLimiter;
     private readonly ILogger<NeoAdminAuthService> logger;
 
     public NeoAdminAuthService(
         IFreeSql freeSql,
         IDataProtectionProvider dataProtectionProvider,
         IHttpContextAccessor httpContextAccessor,
+        LoginRateLimiter loginRateLimiter,
         ILogger<NeoAdminAuthService> logger)
     {
         this.freeSql = freeSql;
         tokenProtector = dataProtectionProvider.CreateProtector("NeoAdmin.Auth.Token.v1");
         this.httpContextAccessor = httpContextAccessor;
+        this.loginRateLimiter = loginRateLimiter;
         this.logger = logger;
     }
 
@@ -35,6 +39,13 @@ public sealed class NeoAdminAuthService
             return ApiResult<LoginResponse>.Error(validationError.Message, validationError.Code);
         }
 
+        string clientIp = IpHelper.GetClientIpAddress(httpContextAccessor.HttpContext, logger);
+        if (loginRateLimiter.IsBlocked(clientIp, out string? blockedMessage))
+        {
+            logger.LogWarning("登录失败：IP 限流，ClientIp={ClientIp}", clientIp);
+            return ApiResult<LoginResponse>.Error(blockedMessage!);
+        }
+
         string username = request.Username.Trim();
         SysUser? user = await freeSql.Select<SysUser>()
             .Where(a => a.Username == username)
@@ -42,9 +53,11 @@ public sealed class NeoAdminAuthService
 
         if (user is null || !string.Equals(user.Password, request.Password, StringComparison.Ordinal))
         {
-            await WriteLoginLogAsync(username, SysUserLoginLog.LogType.登陆失败, "用户名或密码错误");
-            logger.LogWarning("登录失败：用户名或密码错误，Username={Username}", username);
-            return ApiResult<LoginResponse>.Error("用户名或密码错误");
+            int count = loginRateLimiter.RecordFailure(clientIp);
+            await WriteLoginLogAsync(username, SysUserLoginLog.LogType.登陆失败, $"failed:{count}");
+            logger.LogWarning("登录失败：用户名或密码错误，Username={Username}，ClientIp={ClientIp}，Count={Count}",
+                username, clientIp, count);
+            return ApiResult<LoginResponse>.Error($"用户名或密码错误，当前限制次数：{count}");
         }
 
         if (!user.IsEnabled)
@@ -129,25 +142,9 @@ public sealed class NeoAdminAuthService
             Username = username,
             Type = type,
             Extra = extra,
-            Ip = GetClientIpAddress(httpContext),
+            Ip = IpHelper.GetClientIpAddress(httpContext, logger),
             UserAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? string.Empty
         }).ExecuteAffrowsAsync();
-    }
-
-    private static string GetClientIpAddress(HttpContext? httpContext)
-    {
-        if (httpContext is null)
-        {
-            return string.Empty;
-        }
-
-        string? forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwardedFor))
-        {
-            return forwardedFor.Split(',')[0].Trim();
-        }
-
-        return httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? string.Empty;
     }
 
     private static UserSummaryResponse ToSummary(SysUser user) => new()

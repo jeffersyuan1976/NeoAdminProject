@@ -6,7 +6,7 @@ namespace NeoAdmin.Blazor.Utils;
 
 public static class IpHelper
 {
-    public static string GetClientIpAddress(HttpContext httpContext, ILogger? logger = null)
+    public static string GetClientIpAddress(HttpContext? httpContext, ILogger? logger = null)
     {
         try
         {

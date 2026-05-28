@@ -87,6 +87,7 @@ public static class NeoAdminExtensions
         });
 
         services.AddScoped<UnitOfWorkManager>();
+        services.AddSingleton<LoginRateLimiter>();
         services.AddScoped<NeoAdminAuthService>();
         services.AddScoped<MenuService>();
         services.AddScoped<FileService>();
