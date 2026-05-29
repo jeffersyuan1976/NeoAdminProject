@@ -9,6 +9,7 @@
 
 <PageTitle>文件管理</PageTitle>
 
+<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 <CrudTable @ref="table"
            TItem="SysFile"
            Title="文件"
@@ -87,6 +88,7 @@
         </div>
     </EditTemplate>
 </CrudTable>
+</div>
 
 @code {
     private CrudTable<SysFile> table = default!;

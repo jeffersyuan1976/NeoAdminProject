@@ -11,7 +11,7 @@
 
 <PageTitle>随笔文章</PageTitle>
 
-<div class="flex flex-col flex-1 min-h-0">
+<div class="flex flex-col flex-1 min-h-0 overflow-hidden">
     <CrudTable @ref="table" TItem="BlogArticle" Title="随笔文章" PageSize="50" SearchPlaceholder="标题 / 关键字 / 摘要.."
         IsWorkflowAudit="true" WorkflowAuditMenuPath="/Blog/Article"
         InitQuery="InitQuery" OnQuery="HandleQuery" OnEdit="HandleEdit" OnSaveAsync="HandleSaveAsync"

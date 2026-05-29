@@ -10,14 +10,15 @@
  * 相关组件：
  * - LayoutAdmin.razor：SidebarProvider HeightClass="neo-admin-shell"
  * - LayoutAdmin.razor：SidebarInset Class="neo-admin-inset"
- * - 列表页可在表格外层包一层 class="neo-admin-table-container" 做内部滚动
+ * - 非列表页根节点使用 class="neo-admin-page-scroll" 做主体纵向滚动
+ * - CrudTable 列表页根节点使用 flex-1 min-h-0 overflow-hidden，表格内部滚动
  *
  * 层级说明：
  * 1. html, body     — 视口 100% 高，overflow 隐藏（滚动交给内层）
  * 2. #app / [data-neo-app] — Blazor 根节点同样占满
  * 3. .neo-admin-shell      — 侧栏+主区外壳，100dvh flex
  * 4. main / .neo-admin-inset — 主内容区继承高度
- * 5. .neo-admin-table-container — 可选，表格局部滚动
+ * 5. .neo-admin-page-scroll — 非 CrudTable 页面主体纵向滚动
  *
  * 加载顺序（App.razor）：
  *   app.css（:root 变量）→ 本文件 → dialog-max-width.css
@@ -66,5 +67,13 @@ body {
   height: 100% !important;
   min-height: 0 !important;
   overflow: hidden !important;
+}
+
+/* 非 CrudTable 页面：占满主内容区高度，内容超出时出现 Y 轴滚动条 */
+.neo-admin-page-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
 }
 
