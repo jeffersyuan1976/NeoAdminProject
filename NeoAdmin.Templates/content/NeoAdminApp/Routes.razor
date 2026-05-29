@@ -1,8 +1,11 @@
 @using NeoAdmin.Blazor.Components
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 <Router AppAssembly="@typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(LayoutAdmin).Assembly }">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(LayoutAdmin)" />
+        <RouteView RouteData="@routeData"
+                   DefaultLayout="@typeof(LayoutAdmin)"
+                   @rendermode="new InteractiveServerRenderMode(prerender: false)" />
     </Found>
     <NotFound>
         <PageTitle>Not found</PageTitle>
