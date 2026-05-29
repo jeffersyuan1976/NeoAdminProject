@@ -1,7 +1,7 @@
 /**
- * Tailwind v4 入口（NeoAdminApp 宿主）
+ * Tailwind v4 入口（NeoAdmin 宿主）
  * 构建：npm run build:css → wwwroot/css/tailwind.css
- * NeoAdmin.Blazor（NuGet）内页面样式见 _content/NeoAdmin.Blazor/*.css
+ * 主题变量由 App.razor 中 NeoUI 主题 CSS 提供，此处不写死 oklch。
  * @see https://neoui.io/docs/theming
  */
 
@@ -9,4 +9,5 @@
 
 @import 'tailwindcss';
 
+/* 避免编译期烘焙颜色，保证 ThemeSwitcher / 暗色模式仍走 CSS 变量 */
 @theme inline;

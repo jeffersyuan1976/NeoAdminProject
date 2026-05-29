@@ -144,7 +144,7 @@ def main() -> int:
             if not dst.is_file():
                 continue
             rel = dst.relative_to(TARGET)
-            if rel.name in KEEP_TEMPLATE_ONLY:
+            if rel.name in KEEP_TEMPLATE_ONLY or rel.name in SKIP_SYNC_FILENAMES:
                 continue
             if rel.as_posix() not in copied:
                 dst.unlink()

@@ -3,6 +3,9 @@
 @using Microsoft.AspNetCore.Components.Endpoints
 @attribute [ExcludeFromInteractiveRouting]
 
+@* 本页为纯静态 SSR：通过 [ExcludeFromInteractiveRouting] 让 App.razor 以静态模式渲染，
+   因此不建立 SignalR 电路。复制按钮使用原生 onclick 调用 JS，而非 Blazor 的 OnClick 事件。 *@
+
 <PageTitle>NeoAdmin</PageTitle>
 
 <div class="w-full max-w-2xl space-y-8 text-center">
@@ -51,7 +54,15 @@
                         <p class="text-xs leading-relaxed">
                             安装或升级项目模板（首次安装与覆盖升级均用同一条命令）
                         </p>
-                        <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 text-xs leading-relaxed"><code>dotnet new install NeoAdmin.Templates --force</code></pre>
+                        <div class="relative">
+                            <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 pr-10 text-xs leading-relaxed"><code>@InstallTemplateCommand</code></pre>
+                            <button type="button"
+                                    onclick="neoAdminAuth.copyText('@InstallTemplateCommand')"
+                                    aria-label="复制命令"
+                                    class="absolute right-1 top-1 inline-flex size-10 items-center justify-center rounded-md p-0 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                                <LucideIcon Name="copy" Size="18" />
+                            </button>
+                        </div>
                     </div>
                 </li>
                 <li class="flex gap-3">
@@ -60,7 +71,15 @@
                         <p class="text-xs leading-relaxed">
                             在空目录中创建项目
                         </p>
-                        <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 text-xs leading-relaxed"><code>dotnet new neoadmin -n MyAdmin -o .</code></pre>
+                        <div class="relative">
+                            <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 pr-10 text-xs leading-relaxed"><code>@CreateProjectCommand</code></pre>
+                            <button type="button"
+                                    onclick="neoAdminAuth.copyText('@CreateProjectCommand')"
+                                    aria-label="复制命令"
+                                    class="absolute right-1 top-1 inline-flex size-10 items-center justify-center rounded-md p-0 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                                <LucideIcon Name="copy" Size="18" />
+                            </button>
+                        </div>
                     </div>
                 </li>
                 <li class="flex gap-3">
@@ -72,7 +91,15 @@
                                href="@DevServerUrl" target="_blank" rel="noopener">@DevServerUrl</a>
                             即可访问站点。
                         </p>
-                        <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 text-xs leading-relaxed"><code>dotnet watch run</code></pre>
+                        <div class="relative">
+                            <pre class="overflow-x-auto rounded-lg border bg-muted/40 p-3 pr-10 text-xs leading-relaxed"><code>@WatchRunCommand</code></pre>
+                            <button type="button"
+                                    onclick="neoAdminAuth.copyText('@WatchRunCommand')"
+                                    aria-label="复制命令"
+                                    class="absolute right-1 top-1 inline-flex size-10 items-center justify-center rounded-md p-0 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                                <LucideIcon Name="copy" Size="18" />
+                            </button>
+                        </div>
                     </div>
                 </li>
             </ol>
@@ -99,4 +126,8 @@
 
     private const string GitHubUrl = "https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject";
     private const string DevServerUrl = "http://localhost:5038/";
+
+    private const string InstallTemplateCommand = "dotnet new install NeoAdmin.Templates --force";
+    private const string CreateProjectCommand = "dotnet new neoadmin -n MyAdmin -o .";
+    private const string WatchRunCommand = "dotnet watch run";
 }
