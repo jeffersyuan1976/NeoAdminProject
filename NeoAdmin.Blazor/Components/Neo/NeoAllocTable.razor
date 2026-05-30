@@ -39,7 +39,7 @@
               @foreach (TChild child in choices)
               {
                 TKey key = KeySelector(child);
-                <div class="flex items-center gap-2 @GetIndentClass(child)">
+                <div class="flex items-center gap-2" style="@GetIndentStyle(child)">
                   <Checkbox Checked="@IsSelected(key)" CheckedChanged="@(value => ToggleAsync(key, value))"
                     Id="@($"neo-alloc-{key}")" />
                   <Label For="@($"neo-alloc-{key}")" Class="cursor-pointer font-normal">
@@ -220,24 +220,11 @@
 
   private void ResetSelection() => selectedKeys.Clear();
 
-  private string GetIndentClass(TChild child)
+  /// <summary>与菜单管理列表一致：每层 18px，不依赖 Tailwind 是否扫描到 pl-*。</summary>
+  private string GetIndentStyle(TChild child)
   {
     int level = LevelSelector?.Invoke(child) ?? 0;
-    return level switch
-    {
-      <= 0 => "",
-      1 => "pl-4",
-      2 => "pl-8",
-      3 => "pl-12",
-      4 => "pl-16",
-      5 => "pl-20",
-      6 => "pl-24",
-      7 => "pl-28",
-      8 => "pl-32",
-      9 => "pl-36",
-      10 => "pl-40",
-      _ => "pl-40",
-    };
+    return level > 0 ? $"padding-left:{level * 18}px" : string.Empty;
   }
 
   private async Task SaveAsync()
