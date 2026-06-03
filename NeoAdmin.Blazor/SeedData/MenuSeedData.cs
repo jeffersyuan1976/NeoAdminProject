@@ -8,7 +8,6 @@ public static class MenuSeedData
 {
     public static void Ensure(IFreeSql freeSql)
     {
-        RemoveObsolete(freeSql);
         EnsureMenus(freeSql, CreateMenus());
     }
 
@@ -18,102 +17,6 @@ public static class MenuSeedData
         {
             EnsureRecursive(freeSql, menu, 0);
         }
-    }
-
-    private static void RemoveObsolete(IFreeSql freeSql)
-    {
-        RemoveMovedBusinessDemoMenus(freeSql);
-
-        freeSql.Delete<SysMenu>()
-            .Where(a => a.IsSystem
-                        && a.Path.StartsWith("/neo-demo/")
-                        && !a.Path.StartsWith("/neo-demo/comp/")
-                        && !a.Path.StartsWith("/neo-demo/ui/"))
-            .ExecuteAffrows();
-
-        long? neoDemoId = freeSql.Select<SysMenu>()
-            .Where(a => a.ParentId == 0 && a.IsSystem && a.Label == "NeoDemo")
-            .First(a => (long?)a.Id);
-
-        if (neoDemoId is not null)
-        {
-            freeSql.Delete<SysMenu>()
-                .Where(a => a.ParentId == neoDemoId && a.IsSystem && a.Path.StartsWith("/neo-demo/"))
-                .ExecuteAffrows();
-        }
-
-        List<long> rootIds = freeSql.Select<SysMenu>()
-            .Where(a => a.ParentId == 0
-                        && a.IsSystem
-                        && (a.Label == "BBDemo" || a.Label == "NovaDemo"))
-            .ToList(a => a.Id);
-
-        if (rootIds.Count == 0)
-        {
-            return;
-        }
-
-        List<SysMenu> all = freeSql.Select<SysMenu>().ToList();
-        List<long> deleteIds = new(rootIds);
-        for (int index = 0; index < deleteIds.Count; index++)
-        {
-            long parentId = deleteIds[index];
-            deleteIds.AddRange(all.Where(a => a.ParentId == parentId && a.IsSystem).Select(a => a.Id));
-        }
-
-        freeSql.Delete<SysMenu>()
-            .Where(a => deleteIds.Contains(a.Id) && a.IsSystem)
-            .ExecuteAffrows();
-    }
-
-    /// <summary>移除已迁移/改名的业务演示菜单，避免侧边栏重复。</summary>
-    private static void RemoveMovedBusinessDemoMenus(IFreeSql freeSql)
-    {
-        string[] movedPaths =
-        [
-            "/neo-demo/ui/nova-button",
-            "/neo-demo/ui/file-cache",
-            "/neo-demo/ui/anti-concurrency",
-            "/neo-demo/ui/transactional",
-            "/neo-demo/ui/animation"
-        ];
-
-        string[] obsoleteLabels = ["NovaButton", "AntiConcurrency", "Transactional"];
-
-        List<long> rootIds = new();
-
-        long? uiCompId = freeSql.Select<SysMenu>()
-            .Where(a => a.IsSystem && a.Label == "UI 组件")
-            .First(a => (long?)a.Id);
-
-        if (uiCompId is not null)
-        {
-            rootIds.AddRange(freeSql.Select<SysMenu>()
-                .Where(a => a.ParentId == uiCompId && a.IsSystem && movedPaths.Contains(a.Path))
-                .ToList(a => a.Id));
-        }
-
-        rootIds.AddRange(freeSql.Select<SysMenu>()
-            .Where(a => a.IsSystem && movedPaths.Contains(a.Path) && obsoleteLabels.Contains(a.Label))
-            .ToList(a => a.Id));
-
-        rootIds = rootIds.Distinct().ToList();
-        if (rootIds.Count == 0)
-        {
-            return;
-        }
-
-        List<SysMenu> all = freeSql.Select<SysMenu>().ToList();
-        List<long> deleteIds = new(rootIds);
-        for (int index = 0; index < deleteIds.Count; index++)
-        {
-            long parentId = deleteIds[index];
-            deleteIds.AddRange(all.Where(a => a.ParentId == parentId && a.IsSystem).Select(a => a.Id));
-        }
-
-        freeSql.Delete<SysMenu>()
-            .Where(a => deleteIds.Contains(a.Id))
-            .ExecuteAffrows();
     }
 
     private static void EnsureRecursive(IFreeSql freeSql, SysMenu target, long parentId)
@@ -167,43 +70,6 @@ public static class MenuSeedData
             Menu("文件管理", "folder-open", "/admin/file", 950, type: SysMenuType.增删改查),
             Menu("定时任务", "clock", "/admin/task-scheduler", 955, type: SysMenuType.增删改查),
             Menu("系统日志", "scroll-text", "/admin/system-log", 958)
-        ]),
-        Menu("NeoDemo", "flask-conical", string.Empty, 40, SysMenuSidebarStyle.展开,
-        [
-            Menu("业务组件", "blocks", string.Empty, 400, SysMenuSidebarStyle.收起,
-            [
-                Page("实体选择", "/neo-demo/comp/select-components", 401, "list-checks"),
-                Page("字典和参数", "/neo-demo/comp/dict-param", 402, "sliders-horizontal"),
-                Page("权限说明", "/neo-demo/comp/permission-guide", 407, "book-open"),
-                Menu("按钮权限", "shield", "/neo-demo/comp/nova-button", 403, children:
-                [
-                    Button("允许演示", "check", "demo_allow", 301),
-                    Button("拦截演示", "ban", "demo_deny", 302)
-                ], type: SysMenuType.菜单),
-                Page("文件缓存", "/neo-demo/comp/file-cache", 406, "file-archive"),
-                Menu("防并发", "timer", "/neo-demo/ui/anti-concurrency", 404, type: SysMenuType.菜单),
-                Menu("事务", "database", "/neo-demo/comp/transactional", 405, type: SysMenuType.菜单)
-            ]),
-            Menu("UI 组件", "layout-grid", string.Empty, 500, SysMenuSidebarStyle.收起,
-            [
-                Page("表单输入", "/neo-demo/ui/form-inputs", 501, "text-cursor-input"),
-                Page("选择与开关", "/neo-demo/ui/form-controls", 502, "toggle-right"),
-                Page("增强输入", "/neo-demo/ui/advanced-inputs", 503, "wand-sparkles"),
-                Page("日期与时间", "/neo-demo/ui/advanced-datetime", 504, "calendar"),
-                Page("编辑器与复杂", "/neo-demo/ui/advanced-complex", 505, "file-code"),
-                Page("内容与装饰", "/neo-demo/ui/display-basics", 510, "layout-template"),
-                Page("状态与列表", "/neo-demo/ui/display-states", 511, "list"),
-                Page("数据展示", "/neo-demo/ui/data-display", 512, "table-2"),
-                Page("图表", "/neo-demo/ui/chart", 513, "chart-column"),
-                Page("反馈组件", "/neo-demo/ui/feedback", 520, "bell-ring"),
-                Page("动画演示", "/neo-demo/comp/animation", 521, "sparkles"),
-                Page("移动端演示", "/neo-demo/ui/mobile", 522, "smartphone"),
-                Page("导航组件", "/neo-demo/ui/navigation", 530, "compass"),
-                Page("按钮与折叠", "/neo-demo/ui/layout-controls", 531, "mouse-pointer-click"),
-                Page("布局与主题", "/neo-demo/ui/layout-tools", 532, "columns-3"),
-                Page("模态与侧板", "/neo-demo/ui/overlays-modal", 540, "panel-top"),
-                Page("浮动与菜单", "/neo-demo/ui/overlays-floating", 541, "layers")
-            ])
         ])
     ];
 
@@ -214,7 +80,7 @@ public static class MenuSeedData
     public static SysMenu PageWithAudit(string label, string path, int sort, string icon, bool isSystem = true) =>
         Menu(label, icon, path, sort, type: SysMenuType.增删改查, children: CreateCrudAndAuditButtons(isSystem), isSystem: isSystem);
 
-    private static SysMenu Button(string label, string icon, string path, int sort, bool isSystem = true) =>
+    public static SysMenu Button(string label, string icon, string path, int sort, bool isSystem = true) =>
         Menu(label, icon, path, sort, type: SysMenuType.按钮, isSystem: isSystem);
 
     public static SysMenu Api(string label, string icon, string path, int sort, bool isSystem = true) =>

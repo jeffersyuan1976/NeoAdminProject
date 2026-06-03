@@ -24,6 +24,7 @@ public static class DataSetup
         }
 
         MenuSeedData.Ensure(freeSql);
+        PageSearchTabSeedData.Ensure();
         AuditMenuSeedData.EnsureButtons(freeSql, "/Blog/Article");
         SeedData.Ensure(freeSql, options);
     }

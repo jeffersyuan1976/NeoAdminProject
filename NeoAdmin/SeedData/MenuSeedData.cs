@@ -5,12 +5,13 @@ using BlazorMenuSeedData = NeoAdmin.Blazor.SeedData.MenuSeedData;
 namespace NeoAdmin.SeedData;
 
 /// <summary>
-/// 业务菜单种子数据（宿主项目专用）。
+/// 业务菜单种子数据（宿主项目专用；NeoDemo 见 <see cref="DemoMenuSeedData"/>）。
 /// </summary>
 public static class MenuSeedData
 {
     public static void Ensure(IFreeSql freeSql)
     {
+        DemoMenuSeedData.Ensure(freeSql);
         BlazorMenuSeedData.EnsureMenus(freeSql, CreateMenus());
     }
 
@@ -26,7 +27,7 @@ public static class MenuSeedData
             BlazorMenuSeedData.Page("用户点赞", "/Blog/UserLike", 456, "thumbs-up", isSystem: false),
             BlazorMenuSeedData.Page("收藏", "/Blog/Collection", 457, "bookmark", isSystem: false)
         ], isSystem: false),
-        
+
         BlazorMenuSeedData.Menu("Api", "code", string.Empty, 0, SysMenuSidebarStyle.收起,
         [
             BlazorMenuSeedData.Menu("Login", "log-in", "login", 100, children:
