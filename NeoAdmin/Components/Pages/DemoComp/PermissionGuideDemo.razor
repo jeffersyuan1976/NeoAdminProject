@@ -1,0 +1,285 @@
+@page "/neo-demo/comp/permission-guide"
+@layout LayoutAdmin
+@using NeoAdmin.Components.Pages.DemoComp.Snippets
+@inject ILogger<PermissionGuideDemo> Logger
+
+<PageTitle>权限说明</PageTitle>
+
+<div class="neo-admin-page-scroll flex min-h-0 flex-1 flex-col gap-4 p-1">
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="border-b px-4 py-3">
+            <strong class="text-base font-semibold">菜单路径权限说明</strong>
+            <p class="mt-1 text-sm text-muted-foreground">
+                按实际业务案例拆分：页面、按钮、路由守卫、API。配置入口：
+                <a class="text-primary underline-offset-4 hover:underline" href="/admin/role">角色管理</a>、
+                <a class="text-primary underline-offset-4 hover:underline" href="/admin/menu">菜单管理</a>。
+            </p>
+        </div>
+
+        <div class="p-4">
+            <SearchableTabs DefaultValue="overview" Class="w-full">
+                <div class="overflow-x-auto pb-1">
+                    <TabsList Class="inline-flex h-auto w-max min-w-full flex-wrap gap-1">
+                        <TabsTrigger Value="overview">模型概览</TabsTrigger>
+                        <TabsTrigger Value="page-role">页面与角色</TabsTrigger>
+                        <TabsTrigger Value="route-menu">路由与菜单</TabsTrigger>
+                        <TabsTrigger Value="button-crud">按钮与表格</TabsTrigger>
+                        <TabsTrigger Value="nova-api">NovaButton 与 API</TabsTrigger>
+                    </TabsList>
+                </div>
+
+                <TabsContent Value="overview" Class="mt-4 space-y-4">
+                    <DemoSection Title="三件事：页面、按钮、接口"
+                                 Description="权限数据都在 SysMenu + SysRoleMenu；判断入口是 MenuPermissionService。"
+                                 Code="@PermissionGuideDemoSnippets.HasPage">
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-sm">
+                                <thead class="bg-muted/50 text-left">
+                                    <tr>
+                                        <th class="px-3 py-2 font-medium">类型</th>
+                                        <th class="px-3 py-2 font-medium">菜单 Path 示例</th>
+                                        <th class="px-3 py-2 font-medium">代码方法</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr>
+                                        <td class="px-3 py-2">页面</td>
+                                        <td class="px-3 py-2"><code>/admin/user</code></td>
+                                        <td class="px-3 py-2"><code>HasPageAsync</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2">按钮</td>
+                                        <td class="px-3 py-2">父页面下 <code>add</code>、<code>edit</code>、<code>remove</code></td>
+                                        <td class="px-3 py-2"><code>HasButtonAsync</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2">API</td>
+                                        <td class="px-3 py-2">组 <code>login</code> + 动作 <code>Login</code></td>
+                                        <td class="px-3 py-2"><code>HasApiAsync</code></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <Alert Variant="AlertVariant.Info" Class="mt-4">
+                            <strong>管理员角色</strong>：拥有全部菜单 ID，等价于旧系统 TenantMenus。
+                            <strong>普通角色</strong>：仅拥有在「角色管理 → 分配菜单」中勾选的节点（含自动补全的父级目录）。
+                        </Alert>
+                    </DemoSection>
+
+                    <DemoSection Title="菜单树长什么样"
+                                 Description="增删改查类型页面会自动种子 add / edit / remove 三个按钮子菜单。"
+                                 Code="@PermissionGuideDemoSnippets.RoleMenuTree">
+                        <p class="text-sm text-muted-foreground">
+                            路径比较时忽略大小写与首尾斜杠（<code>MenuPathHelper</code>），
+                            因此 <code>/admin/user</code> 与 <code>admin/user</code> 视为同一路由。
+                        </p>
+                    </DemoSection>
+                </TabsContent>
+
+                <TabsContent Value="page-role" Class="mt-4 space-y-4">
+                    <DemoSection Title="案例 1：管理员 vs 普通用户"
+                                 Description="种子数据中有「管理员」（IsAdministrator）与「普通用户」角色。">
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <div class="rounded-lg border bg-muted/30 p-3 text-sm">
+                                <div class="mb-2 font-semibold">管理员登录</div>
+                                <ul class="list-disc space-y-1 pl-5 text-muted-foreground">
+                                    <li>侧边栏可见全部已配置菜单</li>
+                                    <li>访问 <code>/admin/user</code> 允许</li>
+                                    <li>用户列表增删改按钮默认可见</li>
+                                </ul>
+                            </div>
+                            <div class="rounded-lg border bg-muted/30 p-3 text-sm">
+                                <div class="mb-2 font-semibold">普通用户（只勾控制台 + 用户管理页面，不勾按钮）</div>
+                                <ul class="list-disc space-y-1 pl-5 text-muted-foreground">
+                                    <li>侧边栏只有有权限的项</li>
+                                    <li>能打开用户列表，但无新增/编辑/删除</li>
+                                    <li>直接访问 <code>/admin/role</code> → 无权限页</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </DemoSection>
+
+                    <DemoSection Title="案例 2：只读用户管理"
+                                 Description="在角色里只勾选页面 /admin/user，不勾选 add、edit、remove。"
+                                 Code="@PermissionGuideDemoSnippets.HasButton">
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-sm">
+                                <thead class="bg-muted/50 text-left">
+                                    <tr>
+                                        <th class="px-3 py-2 font-medium">操作</th>
+                                        <th class="px-3 py-2 font-medium">结果</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr><td class="px-3 py-2">侧边栏进入用户管理</td><td class="px-3 py-2 text-emerald-700">可以</td></tr>
+                                    <tr><td class="px-3 py-2">工具栏「新增」</td><td class="px-3 py-2 text-red-600">不显示</td></tr>
+                                    <tr><td class="px-3 py-2">行内编辑 / 删除</td><td class="px-3 py-2 text-red-600">不显示</td></tr>
+                                    <tr><td class="px-3 py-2">开启查看时行内「查看」</td><td class="px-3 py-2 text-emerald-700">可以（有页面即可）</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </DemoSection>
+
+                    <DemoSection Title="案例 3：能改不能删"
+                                 Description="勾选 /admin/user + add + edit，不勾选 remove。">
+                        <p class="text-sm text-muted-foreground">
+                            典型场景：运营可维护数据，但禁止删除。若后端将来有独立删除 API，同样需在 Api 菜单树下授权才会放行。
+                        </p>
+                    </DemoSection>
+                </TabsContent>
+
+                <TabsContent Value="route-menu" Class="mt-4 space-y-4">
+                    <DemoSection Title="案例 4：知道 URL 也不能越权"
+                                 Description="LayoutAdmin 在首次进入与路由变化时调用 EnsurePagePermissionAsync。"
+                                 Code="@PermissionGuideDemoSnippets.LayoutGuard">
+                        <ol class="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+                            <li>用户仅有「字典管理」<code>/admin/dict</code></li>
+                            <li>侧边栏与 ⌘K 搜索都不会出现「角色管理」</li>
+                            <li>收藏夹打开 <code>/admin/role</code></li>
+                            <li><code>HasPageAsync</code> 返回 false → 跳转 <a class="text-primary underline" href="/forbidden">/forbidden</a></li>
+                        </ol>
+                        <Alert Variant="AlertVariant.Warning" Class="mt-4">
+                            免鉴权页面仅 <code>/login</code>、<code>/forbidden</code>。
+                            未在菜单表登记的 Blazor 路由，即使管理员也会被拒绝（权限与菜单 Path 绑定，不是「登录即可访问任意路由」）。
+                        </Alert>
+                    </DemoSection>
+
+                    <DemoSection Title="侧边栏与全局搜索"
+                                 Description="GetNavigationMenusAsync 按角色过滤，并自动带上父级目录节点。">
+                        <ul class="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                            <li><code>LayoutAdminSidebarMenu</code>：只渲染有权限的菜单树</li>
+                            <li>布局顶栏 ⌘K：索引同样来自过滤后的页面列表</li>
+                            <li>父菜单 Path 可为空（如「系统管理」），仅作分组展示</li>
+                        </ul>
+                    </DemoSection>
+                </TabsContent>
+
+                <TabsContent Value="button-crud" Class="mt-4 space-y-4">
+                    <DemoSection Title="CrudTable 如何接权限"
+                                 Description="当前 Blazor 页面路由默认作为 MenuPath；也可显式设置 MenuPath 或 WorkflowAuditMenuPath。"
+                                 Code="@PermissionGuideDemoSnippets.HasButton">
+                        <p class="mb-3 text-sm text-muted-foreground">
+                            以 <a class="text-primary underline" href="/admin/user">/admin/user</a> 为例，
+                            <code>CrudTable</code> 初始化时会查询：
+                        </p>
+                        <ul class="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                            <li><code>canToolbarAdd</code> ← <code>HasButtonAsync(..., "add")</code></li>
+                            <li><code>canRowEdit</code> ← <code>HasButtonAsync(..., "edit")</code></li>
+                            <li><code>canRowRemove</code> ← <code>HasButtonAsync(..., "remove")</code></li>
+                            <li><code>canRowView</code> ← <code>HasPageAsync</code>（有页面即可查看）</li>
+                        </ul>
+                    </DemoSection>
+
+                    <DemoSection Title="审批按钮"
+                                 Description="CrudAuditPanel 使用 audit_00、audit_01… 等按钮 Path，与 AuditMenuDefinitions 一致。">
+                        <p class="text-sm text-muted-foreground">
+                            需为页面勾选对应审批子菜单后，行内「审批」入口与审批面板按钮才会显示。
+                        </p>
+                    </DemoSection>
+
+                    <div class="overflow-x-auto rounded-lg border">
+                        <table class="w-full text-sm">
+                            <thead class="bg-muted/50 text-left">
+                                <tr>
+                                    <th class="px-3 py-2 font-medium">组件</th>
+                                    <th class="px-3 py-2 font-medium">按钮名来源</th>
+                                    <th class="px-3 py-2 font-medium">典型场景</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <tr>
+                                    <td class="px-3 py-2">CrudTable</td>
+                                    <td class="px-3 py-2">固定 add / edit / remove</td>
+                                    <td class="px-3 py-2">标准列表页</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2">NovaButtonAttribute</td>
+                                    <td class="px-3 py-2">特性参数，如 demo_allow</td>
+                                    <td class="px-3 py-2">自定义操作、导出等</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </TabsContent>
+
+                <TabsContent Value="nova-api" Class="mt-4 space-y-4">
+                    <DemoSection Title="案例 5：NovaButton 演示页"
+                                 Description="交互演示见「按钮权限」页；此处说明配置关系。">
+                        <p class="mb-3 text-sm text-muted-foreground">
+                            页面 <code>/neo-demo/comp/nova-button</code>，菜单下种子了
+                            <code>demo_allow</code>、<code>demo_deny</code>。
+                            方法上写 <code>[NovaButton("demo_allow")]</code> 时，未勾选该按钮的角色点击只会 Toast，不会进入方法体。
+                        </p>
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                                OnClick="GoNovaButtonDemo">
+                            打开 NovaButton 演示
+                        </Button>
+                    </DemoSection>
+
+                    <DemoSection Title="案例 6：API 权限"
+                                 Description="NeoAdminPermissionFilter 解析 /api/login@Login 等形式，对照隐藏 Api 菜单树。"
+                                 Code="@PermissionGuideDemoSnippets.HasApi">
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-sm">
+                                <thead class="bg-muted/50 text-left">
+                                    <tr>
+                                        <th class="px-3 py-2 font-medium">请求</th>
+                                        <th class="px-3 py-2 font-medium">解析</th>
+                                        <th class="px-3 py-2 font-medium">需勾选菜单</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-muted-foreground">
+                                    <tr>
+                                        <td class="px-3 py-2"><code>POST /api/login@Login</code></td>
+                                        <td class="px-3 py-2">login + Login</td>
+                                        <td class="px-3 py-2">login → Login（且带 AllowAnonymous 时未登录也可调）</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2"><code>GET /api/login@Check</code></td>
+                                        <td class="px-3 py-2">login + Check</td>
+                                        <td class="px-3 py-2">login → Check</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2"><code>POST /api/login@ChangePassword</code></td>
+                                        <td class="px-3 py-2">login + ChangePassword</td>
+                                        <td class="px-3 py-2">未勾选 → 401，code 5003</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2"><code>GET /api/article@GetAll</code></td>
+                                        <td class="px-3 py-2">article + GetAll</td>
+                                        <td class="px-3 py-2">article → GetAll</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <Alert Variant="AlertVariant.Info" Class="mt-4">
+                            <code>[AllowAnonymous]</code> 的接口（如 Register、Login）跳过菜单校验；
+                            其余 API 需 Bearer Token + 对应接口菜单权限。
+                        </Alert>
+                    </DemoSection>
+
+                    <DemoSection Title="案例 7：从打开页面到点保存"
+                                 Description="以 /admin/user 为例的完整链路。">
+                        <ol class="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+                            <li>登录 → Token 写入浏览器</li>
+                            <li>LayoutAdmin → <code>HasPageAsync("/admin/user")</code></li>
+                            <li>CrudTable → 按按钮权限隐藏工具栏与行操作</li>
+                            <li>带 <code>[NovaButton]</code> 的自定义操作 → 点击时再次校验</li>
+                        </ol>
+                    </DemoSection>
+                </TabsContent>
+            </SearchableTabs>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override void OnInitialized() =>
+        DemoPageLog.Enter(Logger, "权限说明");
+
+    private void GoNovaButtonDemo() =>
+        NavigationManager.NavigateTo("/neo-demo/comp/nova-button");
+}
