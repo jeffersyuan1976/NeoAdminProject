@@ -10,7 +10,7 @@
 @inject ILoggerFactory LoggerFactory
 
 <Dialog Open="@(Item != null)" OpenChanged="HandleOpenChanged">
-  <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToClass()" CloseOnEscape="false">
+  <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToDialogClass()" CloseOnEscape="false">
     <div class="flex max-h-[min(90vh,48rem)] flex-col">
       <div class="shrink-0">
         <DialogHeader>

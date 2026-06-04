@@ -190,7 +190,7 @@
 @if (CanShowEditor)
 {
     <Dialog Open="@editorOpen" OpenChanged="HandleEditorOpenChanged">
-        <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToClass()" CloseOnEscape="false">
+        <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToDialogClass()" CloseOnEscape="false">
             <DialogHeader>
                 <DialogTitle>
                     @(isViewMode? ViewText : (isNewItem ? AddText : EditText)) @Title
@@ -281,7 +281,7 @@
 @if (IsWorkflowAudit && auditDialogOpen && auditTarget is EntityAudited auditEntity)
 {
     <Dialog Open="@auditDialogOpen" OpenChanged="HandleAuditDialogOpenChanged">
-        <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToClass()">
+        <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToDialogClass()">
             <DialogHeader>
                 <DialogTitle>审批 — @Title</DialogTitle>
                 <DialogDescription>提交、审核、退回或拒绝当前记录。</DialogDescription>
@@ -938,9 +938,12 @@
         batchDeleteTargets.Clear();
     }
 
-    private async Task HandleAddClick()
+    private Task HandleAddClick() => AddItemAsync();
+
+    /// <summary>打开新增对话框；可传入已预填的实体（不会克隆）。</summary>
+    public async Task AddItemAsync(TItem? item = null)
     {
-        editor = new TItem();
+        editor = item ?? new TItem();
         isNewItem = true;
         isViewMode = false;
         editorOpen = true;

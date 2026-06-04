@@ -3,7 +3,14 @@
  *
  * 弹窗内可滚动区域的最大高度（NeoUI components.css 未包含 vh 系 max-height）。
  * 与 overflow-y-auto 配合：内容超出时出现纵向滚动条。
+ *
+ * Crud 编辑弹窗顶部锚定（CrudDialogContentSizeExtensions.AnchorTopClass）：
+ * 覆盖 NeoUI DialogContent 默认垂直居中，内容高度变化时距视口顶部保持不变。
  */
+
+.top-\[8vh\] {
+  top: 8vh;
+}
 
 .max-h-50vh {
   max-height: 50vh;

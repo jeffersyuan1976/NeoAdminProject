@@ -19,6 +19,12 @@ public enum CrudDialogContentSize
 
 public static class CrudDialogContentSizeExtensions
 {
+    /// <summary>
+    /// 编辑弹窗定位：距视口顶部固定，覆盖 NeoUI 默认垂直居中（top-[50%] translate-y-[-50%]）。
+    /// 样式见 wwwroot/css/dialog-scroll.css 中的 top-[8vh]。
+    /// </summary>
+    public const string AnchorTopClass = "top-[8vh] translate-y-0";
+
     public static string ToClass(this CrudDialogContentSize size) => size switch
     {
         CrudDialogContentSize.Sm => "sm:max-w-sm",
@@ -33,4 +39,8 @@ public static class CrudDialogContentSizeExtensions
         CrudDialogContentSize.X7l => "sm:max-w-7xl",
         _ => "sm:max-w-2xl",
     };
+
+    /// <summary>弹窗宽度 + 顶部锚定 Class，供 CrudTable / NeoAllocTable 等编辑对话框使用。</summary>
+    public static string ToDialogClass(this CrudDialogContentSize size) =>
+        $"{size.ToClass()} {AnchorTopClass}";
 }
