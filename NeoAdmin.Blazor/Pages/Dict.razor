@@ -41,16 +41,6 @@
                         <span class="block truncate font-medium" title="@row.Item.Name">@row.Item.Name</span>
                     </CellTemplate>
                 </DataTableColumn>
-                <DataTableColumn TData="CrudGridRow<SysDict>"
-                                 TValue="string"
-                                 Property="@(row => row.Item.Description)"
-                                 Header="备注"
-                                 Sortable="false">
-                    <CellTemplate Context="row">
-                        <span class="block truncate" title="@row.Item.Description">@row.Item.Description</span>
-                    </CellTemplate>
-                </DataTableColumn>
-
             </Columns>
             <EditTemplate Context="item">
                 <div class="space-y-2">
