@@ -1,0 +1,18 @@
+@namespace NeoAdmin.Blazor.Components
+
+@if (Labels is not null)
+{
+    <div class="flex flex-wrap gap-2">
+        @foreach (string label in Labels.Where(static s => !string.IsNullOrWhiteSpace(s)))
+        {
+            <span title="@label">
+                <Badge Class="max-w-full whitespace-normal text-left">@label</Badge>
+            </span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<string>? Labels { get; set; }
+}

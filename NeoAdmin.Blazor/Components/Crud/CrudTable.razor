@@ -569,6 +569,11 @@
             total));
         }
 
+        if (OnSelectChanged.HasDelegate && !IsPickerMode)
+        {
+            await OnSelectChanged.InvokeAsync(selectedRows);
+        }
+
         if (IsShowLoading)
         {
             isLoading = false;
