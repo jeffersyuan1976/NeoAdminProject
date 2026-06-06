@@ -37,7 +37,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 @if (ShowToolbarRemove && canToolbarRemove)
                 {
-                    <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" Title="@RemoveText"
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Title="@RemoveText"
                         Disabled="@(!HasSelectedRows)" OnClick="HandleBatchDeleteClick">
                         <LucideIcon Name="trash-2" Size="16" />
                         <span>@RemoveText@(HasSelectedRows ? $" ({selectedRows.Count})" : "")</span>
@@ -45,7 +45,7 @@
                 }
                 @if (IsRefresh)
                 {
-                    <Button Variant="ButtonVariant.Link" Size="ButtonSize.Small" OnClick="HandleRefreshClick">
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="HandleRefreshClick">
                         <LucideIcon Name="refresh-cw" Size="16" />
                         <span>刷新</span>
                     </Button>
@@ -53,7 +53,7 @@
                 @ToolbarContent
                 @if (IsAdd && EditTemplate != null && canToolbarAdd)
                 {
-                    <Button Variant="ButtonVariant.Link" Size="@ButtonSize.Small" Title="@AddText" OnClick="HandleAddClick">
+                    <Button Variant="ButtonVariant.Outline" Size="@ButtonSize.Small" Title="@AddText" OnClick="HandleAddClick">
                         <LucideIcon Name="circle-plus" Size="16" />
                         <span>@AddText</span>
                     </Button>
