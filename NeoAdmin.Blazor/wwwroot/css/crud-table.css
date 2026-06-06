@@ -19,6 +19,16 @@
   overflow: hidden;
 }
 
+/* 列表纵向滚动时固定表头（滚动容器为 DataTable 的 overflow-y-auto 外层） */
+.crud-table [data-keyboard-nav] thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-color: color-mix(in oklab, var(--muted) 90%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 0 var(--border);
+}
+
 /* 单选模式：RadioGroup 包裹 DataTable 时需参与 flex 高度链，否则纵向滚动条不出现 */
 .crud-table [role="radiogroup"] {
   display: flex;
