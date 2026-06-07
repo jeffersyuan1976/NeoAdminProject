@@ -258,7 +258,13 @@
         {
             await JSRuntime.InvokeVoidAsync("neoAdminAuth.clearToken");
             string redirect = Uri.EscapeDataString(NavigationManager.Uri);
-            NavigationManager.NavigateTo($"/login?redirect={redirect}", true);
+            string loginUrl = $"/login?redirect={redirect}";
+            if (result.Message?.Contains("其他地方登录", StringComparison.Ordinal) == true)
+            {
+                loginUrl += "&reason=kicked";
+            }
+
+            NavigationManager.NavigateTo(loginUrl, true);
             return;
         }
 

@@ -78,6 +78,8 @@ public sealed class SiteSettingsService
                 .Set(a => a.Description, settings.Description)
                 .Set(a => a.Logo, settings.Logo)
                 .Set(a => a.LoginImage, settings.LoginImage)
+                .Set(a => a.RegisterUrl, settings.RegisterUrl)
+                .Set(a => a.ForgotPasswordUrl, settings.ForgotPasswordUrl)
                 .Set(a => a.IsEnabled, settings.IsEnabled)
                 .ExecuteAffrowsAsync(cancellationToken);
         }

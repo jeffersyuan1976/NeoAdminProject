@@ -43,11 +43,11 @@
                 </CardHeader>
                 <CardContent class="space-y-4">
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div class="space-y-2 sm:col-span-2">
+                        <div class="space-y-2">
                             <Label For="site-title">站点标题</Label>
                             <Input id="site-title" Class="w-full" MaxLength="255" @bind-Value="model.Title" />
                         </div>
-                        <div class="space-y-2 sm:col-span-2">
+                        <div class="space-y-2">
                             <Label For="site-host">
                                 域名
                                 <span class="text-xs font-normal text-muted-foreground">（多个用英文逗号分隔，最多 3 个）</span>
@@ -65,6 +65,26 @@
                                   Class="min-h-24 w-full"
                                   MaxLength="500"
                                   @bind-Value="model.Description" />
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <Label For="site-register-url">注册链接</Label>
+                            <Input id="site-register-url"
+                                   Class="w-full"
+                                   MaxLength="500"
+                                   Placeholder="/register"
+                                   @bind-Value="model.RegisterUrl" />
+                            <p class="text-xs text-muted-foreground">登录页「记住我」右侧显示「注册」；留空不显示。</p>
+                        </div>
+                        <div class="space-y-2">
+                            <Label For="site-forgot-password-url">忘记密码链接</Label>
+                            <Input id="site-forgot-password-url"
+                                   Class="w-full"
+                                   MaxLength="500"
+                                   Placeholder="/forgot-password"
+                                   @bind-Value="model.ForgotPasswordUrl" />
+                            <p class="text-xs text-muted-foreground">登录页「记住我」右侧显示「忘记密码」；留空不显示。</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

@@ -45,6 +45,18 @@ public sealed class SysSiteSettings : EntityCreated
     public string? LoginImage { get; set; }
 
     /// <summary>
+    /// 登录页「注册」链接地址；为空时不显示。
+    /// </summary>
+    [Column(StringLength = 500)]
+    public string? RegisterUrl { get; set; }
+
+    /// <summary>
+    /// 登录页「忘记密码」链接地址；为空时不显示。
+    /// </summary>
+    [Column(StringLength = 500)]
+    public string? ForgotPasswordUrl { get; set; }
+
+    /// <summary>
     /// 站点是否启用（关闭后可在中间件等处扩展拦截逻辑）。
     /// </summary>
     public bool IsEnabled { get; set; } = true;

@@ -75,9 +75,30 @@
                             <ValidationMessage For="@(() => loginModel.Password)" class="text-xs text-destructive" />
                         </Field>
 
-                        <div class="flex items-center gap-2">
-                            <Checkbox Id="remember" @bind-Checked="loginModel.RememberMe" />
-                            <Label For="remember" Class="cursor-pointer text-sm font-normal">记住我 30 天</Label>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <Checkbox Id="remember" @bind-Checked="loginModel.RememberMe" />
+                                <Label For="remember" Class="cursor-pointer text-sm font-normal">记住我 30 天</Label>
+                            </div>
+                            @if (HasLoginExtraLinks)
+                            {
+                                <div class="flex shrink-0 items-center gap-3">
+                                    @if (!string.IsNullOrWhiteSpace(siteSettings?.ForgotPasswordUrl))
+                                    {
+                                        <a href="@siteSettings.ForgotPasswordUrl.Trim()"
+                                           class="text-sm text-primary underline-offset-4 hover:underline">
+                                            忘记密码
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(siteSettings?.RegisterUrl))
+                                    {
+                                        <a href="@siteSettings.RegisterUrl.Trim()"
+                                           class="text-sm text-primary underline-offset-4 hover:underline">
+                                            注册
+                                        </a>
+                                    }
+                                </div>
+                            }
                         </div>
 
                         <Button Type="ButtonType.Submit" Class="w-full" Variant="ButtonVariant.Outline">
@@ -95,9 +116,14 @@
     private string? errorMessage;
     private SysSiteSettings? siteSettings;
 
+    private bool HasLoginExtraLinks =>
+        !string.IsNullOrWhiteSpace(siteSettings?.RegisterUrl)
+        || !string.IsNullOrWhiteSpace(siteSettings?.ForgotPasswordUrl);
+
     protected override async Task OnInitializedAsync()
     {
         siteSettings = await SiteSettingsService.GetAsync();
+        ApplySessionExpiredHintFromQuery();
 
         if (HostEnvironment.IsDevelopment())
         {
@@ -124,6 +150,11 @@
             else
             {
                 await JSRuntime.InvokeVoidAsync("neoAdminAuth.clearToken");
+                if (!string.IsNullOrWhiteSpace(checkResult.Message))
+                {
+                    errorMessage = checkResult.Message;
+                    StateHasChanged();
+                }
             }
         }
     }
@@ -164,6 +195,22 @@
         }
 
         return "/Admin";
+    }
+
+    private void ApplySessionExpiredHintFromQuery()
+    {
+        Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (string.IsNullOrWhiteSpace(uri.Query))
+        {
+            return;
+        }
+
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("reason", out var reason)
+            && string.Equals(reason.ToString(), "kicked", StringComparison.OrdinalIgnoreCase))
+        {
+            errorMessage = "账号已在其他地方登录，请重新登录";
+        }
     }
 
     private sealed class LoginModel

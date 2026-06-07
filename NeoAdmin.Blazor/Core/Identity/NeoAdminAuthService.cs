@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using FreeSql;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -85,19 +86,27 @@ public sealed class NeoAdminAuthService
 
     public async Task<ApiResult<UserSummaryResponse>> CheckAsync(string? token)
     {
-        long? userId = TryReadUserId(token);
-        if (!userId.HasValue)
+        AuthTokenPayload? payload = TryParseToken(token);
+        if (payload is null)
         {
             return ApiResult<UserSummaryResponse>.Error("未登录或登录已过期", 401);
         }
 
         SysUser? user = await freeSql.Select<SysUser>()
-            .Where(a => a.Id == userId.Value)
+            .Where(a => a.Id == payload.UserId)
             .FirstAsync();
 
         if (user is null || !user.IsEnabled)
         {
             return ApiResult<UserSummaryResponse>.Error("未登录或登录已过期", 401);
+        }
+
+        if (payload.LoginTime is null || !LoginTimesMatch(payload.LoginTime.Value, user.LoginTime))
+        {
+            logger.LogInformation(
+                "登录失效：Token 与当前会话不一致（可能已在其他地方登录），UserId={UserId}",
+                user.Id);
+            return ApiResult<UserSummaryResponse>.Error("账号已在其他地方登录，请重新登录", 401);
         }
 
         return ApiResult<UserSummaryResponse>.Success(ToSummary(user));
@@ -111,7 +120,7 @@ public sealed class NeoAdminAuthService
     private string BuildToken(SysUser user) =>
         tokenProtector.Protect($"{user.Id}|{user.LoginTime:O}");
 
-    private long? TryReadUserId(string? token)
+    private AuthTokenPayload? TryParseToken(string? token)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -121,8 +130,19 @@ public sealed class NeoAdminAuthService
         try
         {
             string value = tokenProtector.Unprotect(token);
-            string[] parts = value.Split('|', StringSplitOptions.RemoveEmptyEntries);
-            return parts.Length > 0 && long.TryParse(parts[0], out long userId) ? userId : null;
+            string[] parts = value.Split('|', 2, StringSplitOptions.None);
+            if (parts.Length == 0 || !long.TryParse(parts[0], out long userId))
+            {
+                return null;
+            }
+
+            if (parts.Length < 2
+                || !DateTime.TryParse(parts[1], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime loginTime))
+            {
+                return null;
+            }
+
+            return new AuthTokenPayload(userId, loginTime);
         }
         catch (Exception ex)
         {
@@ -130,6 +150,21 @@ public sealed class NeoAdminAuthService
             return null;
         }
     }
+
+    /// <summary>
+    /// 比对 Token 内嵌的登录时间与数据库记录（允许毫秒级往返误差）。
+    /// </summary>
+    private static bool LoginTimesMatch(DateTime tokenLoginTime, DateTime dbLoginTime)
+    {
+        if (dbLoginTime == default)
+        {
+            return false;
+        }
+
+        return Math.Abs((tokenLoginTime - dbLoginTime).TotalSeconds) < 1;
+    }
+
+    private sealed record AuthTokenPayload(long UserId, DateTime? LoginTime);
 
     private async Task WriteLoginLogAsync(
         string username,
