@@ -21,5 +21,37 @@ window.neoAdminAuth = {
     },
     copyText: async function (text) {
         await navigator.clipboard.writeText(text);
+    },
+    /**
+     * 监听标签页重新可见 / 窗口获焦，回调 Blazor 做登录态校验（单点登录互踢）。
+     */
+    watchSession: function (dotNetRef) {
+        if (window.__neoAdminSessionWatchCleanup) {
+            window.__neoAdminSessionWatchCleanup();
+        }
+
+        const trigger = function () {
+            dotNetRef.invokeMethodAsync("OnSessionWatchAsync").catch(function () { });
+        };
+
+        const onVisibilityChange = function () {
+            if (document.visibilityState === "visible") {
+                trigger();
+            }
+        };
+
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener("focus", trigger);
+
+        window.__neoAdminSessionWatchCleanup = function () {
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            window.removeEventListener("focus", trigger);
+            window.__neoAdminSessionWatchCleanup = null;
+        };
+    },
+    stopWatchSession: function () {
+        if (window.__neoAdminSessionWatchCleanup) {
+            window.__neoAdminSessionWatchCleanup();
+        }
     }
 };

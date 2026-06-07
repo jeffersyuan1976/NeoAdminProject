@@ -226,6 +226,8 @@
 </AppProvider>
 
 @code {
+    private const int SessionCheckIntervalSeconds = 10;
+
     private bool isAuthChecked;
     private bool logoutDialogOpen;
     private bool pageSearchDialogOpen;
@@ -233,6 +235,10 @@
     private SysSiteSettings? siteSettings;
     private string pageTitle = "控制台";
     private List<PageSearchEntry> pageSearchEntries = new();
+    private PeriodicTimer? sessionCheckTimer;
+    private CancellationTokenSource? sessionCheckCts;
+    private DotNetObjectReference<LayoutAdmin>? sessionWatchRef;
+    private int sessionCheckRunning;
 
     private IEnumerable<IGrouping<string, PageSearchEntry>> pageSearchGroups =>
         pageSearchEntries
@@ -245,30 +251,11 @@
             return;
         }
 
-        string? token = await JSRuntime.InvokeAsync<string?>("neoAdminAuth.getToken");
-        if (string.IsNullOrWhiteSpace(token))
+        if (!await EnsureAuthenticatedAsync())
         {
-            string redirect = Uri.EscapeDataString(NavigationManager.Uri);
-            NavigationManager.NavigateTo($"/login?redirect={redirect}", true);
             return;
         }
 
-        ApiResult<UserSummaryResponse> result = await AuthService.CheckAsync(token);
-        if (!result.Succeeded || result.Data is null)
-        {
-            await JSRuntime.InvokeVoidAsync("neoAdminAuth.clearToken");
-            string redirect = Uri.EscapeDataString(NavigationManager.Uri);
-            string loginUrl = $"/login?redirect={redirect}";
-            if (result.Message?.Contains("其他地方登录", StringComparison.Ordinal) == true)
-            {
-                loginUrl += "&reason=kicked";
-            }
-
-            NavigationManager.NavigateTo(loginUrl, true);
-            return;
-        }
-
-        currentUser = result.Data;
         siteSettings = await SiteSettingsService.GetAsync();
         await LoadPageSearchEntriesAsync();
         if (!await EnsurePagePermissionAsync())
@@ -277,6 +264,7 @@
         }
 
         isAuthChecked = true;
+        StartSessionWatch();
         await UpdatePageTitleAsync();
         StateHasChanged();
     }
@@ -300,7 +288,17 @@
     {
         _ = InvokeAsync(async () =>
         {
-            if (isAuthChecked && !await EnsurePagePermissionAsync())
+            if (!isAuthChecked)
+            {
+                return;
+            }
+
+            if (!await EnsureAuthenticatedAsync())
+            {
+                return;
+            }
+
+            if (!await EnsurePagePermissionAsync())
             {
                 return;
             }
@@ -308,6 +306,129 @@
             await UpdatePageTitleAsync();
             StateHasChanged();
         });
+    }
+
+    private void StartSessionWatch()
+    {
+        sessionCheckCts?.Cancel();
+        sessionCheckCts?.Dispose();
+        sessionCheckTimer?.Dispose();
+
+        sessionCheckCts = new CancellationTokenSource();
+        sessionCheckTimer = new PeriodicTimer(TimeSpan.FromSeconds(SessionCheckIntervalSeconds));
+        _ = RunSessionCheckLoopAsync(sessionCheckCts.Token);
+
+        sessionWatchRef?.Dispose();
+        sessionWatchRef = DotNetObjectReference.Create(this);
+        _ = JSRuntime.InvokeVoidAsync("neoAdminAuth.watchSession", sessionWatchRef);
+    }
+
+    private async Task RunSessionCheckLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (sessionCheckTimer is not null
+                   && await sessionCheckTimer.WaitForNextTickAsync(cancellationToken))
+            {
+                if (!isAuthChecked)
+                {
+                    continue;
+                }
+
+                if (!await EnsureAuthenticatedAsync())
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 组件卸载时停止轮询。
+        }
+    }
+
+    [JSInvokable]
+    public Task OnSessionWatchAsync()
+    {
+        if (!isAuthChecked)
+        {
+            return Task.CompletedTask;
+        }
+
+        return InvokeAsync(EnsureAuthenticatedAsync);
+    }
+
+    private async Task<bool> EnsureAuthenticatedAsync()
+    {
+        if (Interlocked.CompareExchange(ref sessionCheckRunning, 1, 0) != 0)
+        {
+            return isAuthChecked;
+        }
+
+        try
+        {
+            string? token = await JSRuntime.InvokeAsync<string?>("neoAdminAuth.getToken");
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                await RedirectToLoginAsync(null);
+                return false;
+            }
+
+            ApiResult<UserSummaryResponse> result = await AuthService.CheckAsync(token);
+            if (!result.Succeeded || result.Data is null)
+            {
+                await RedirectToLoginAsync(result.Message);
+                return false;
+            }
+
+            currentUser = result.Data;
+            return true;
+        }
+        finally
+        {
+            Interlocked.Exchange(ref sessionCheckRunning, 0);
+        }
+    }
+
+    private async Task RedirectToLoginAsync(string? message)
+    {
+        StopSessionWatch();
+        await JSRuntime.InvokeVoidAsync("neoAdminAuth.clearToken");
+        isAuthChecked = false;
+        currentUser = null;
+
+        string redirect = Uri.EscapeDataString(NavigationManager.Uri);
+        string loginUrl = $"/login?redirect={redirect}";
+        if (message?.Contains("其他地方登录", StringComparison.Ordinal) == true)
+        {
+            loginUrl += "&reason=kicked";
+        }
+
+        NavigationManager.NavigateTo(loginUrl, true);
+    }
+
+    private void StopSessionWatch()
+    {
+        sessionCheckCts?.Cancel();
+        sessionCheckCts?.Dispose();
+        sessionCheckCts = null;
+        sessionCheckTimer?.Dispose();
+        sessionCheckTimer = null;
+        sessionWatchRef?.Dispose();
+        sessionWatchRef = null;
+
+        try
+        {
+            _ = JSRuntime.InvokeVoidAsync("neoAdminAuth.stopWatchSession");
+        }
+        catch (JSDisconnectedException)
+        {
+            // 页面卸载时 circuit 可能已断开。
+        }
+        catch (InvalidOperationException)
+        {
+            // 非交互阶段忽略。
+        }
     }
 
     private async Task UpdatePageTitleAsync()
@@ -566,6 +687,7 @@
     private async Task PerformLogoutAsync()
     {
         logoutDialogOpen = false;
+        StopSessionWatch();
         await JSRuntime.InvokeVoidAsync("neoAdminAuth.clearToken");
         isAuthChecked = false;
         currentUser = null;
@@ -576,6 +698,7 @@
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
         SiteSettingsService.SettingsChanged -= OnSiteSettingsChanged;
+        StopSessionWatch();
         return ValueTask.CompletedTask;
     }
 }
