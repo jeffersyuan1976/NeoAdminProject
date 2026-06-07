@@ -15,6 +15,8 @@
 @using NeoAdmin.Blazor.Services
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Hosting
+@inject IHostEnvironment HostEnvironment
 @inject MenuService MenuService
 @inject MenuPermissionService MenuPermission
 
@@ -164,27 +166,30 @@
                                     </CommandContent>
                                 </DialogContent>
                             </Dialog>
-                            <a href="https://demos.neoui.io/"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-                                <LucideIcon Name="book-open" Size="16" Class="shrink-0" />
-                                <span class="whitespace-nowrap">NeoUI 组件文档</span>
-                            </a>
-                            <a href="https://github.com/dotnetcore/FreeSql/issues"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-                                <LucideIcon Name="github" Size="16" Class="shrink-0" />
-                                <span class="whitespace-nowrap">FreeSql Issues</span>
-                            </a>
-                            <a href="https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject"
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
-                                <LucideIcon Name="folder-git-2" Size="16" Class="shrink-0" />
-                                <span class="whitespace-nowrap">NeoAdmin 源码</span>
-                            </a>
+                            @if (HostEnvironment.IsDevelopment())
+                            {
+                                <a href="https://demos.neoui.io/"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="book-open" Size="16" Class="shrink-0" />
+                                    <span class="whitespace-nowrap">NeoUI 组件文档</span>
+                                </a>
+                                <a href="https://github.com/dotnetcore/FreeSql/issues"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="github" Size="16" Class="shrink-0" />
+                                    <span class="whitespace-nowrap">FreeSql Issues</span>
+                                </a>
+                                <a href="https://github.com/3bDjrvHs50kiZIJb5/NeoAdminProject"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2 text-sm font-normal text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="folder-git-2" Size="16" Class="shrink-0" />
+                                    <span class="whitespace-nowrap">NeoAdmin 源码</span>
+                                </a>
+                            }
                             <ThemeSwitcher Strategy="PositioningStrategy.Fixed"
                                            ShowStyles="true"
                                            TriggerClass="size-8" />
