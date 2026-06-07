@@ -15,7 +15,7 @@
         <CrudTable @ref="leftTable"
                    TItem="SysDict"
                    Title="字典分类"
-                   PageSize="30"
+                   PageSize="9999"
                    SearchPlaceholder="编码/备注"
                    IsRefresh="false"
                    IsRowNumber="false"
@@ -177,6 +177,12 @@
                 <div class="flex items-center gap-2">
                     <Checkbox @bind-Checked="item.Enabled" Id="dict-item-enabled" />
                     <Label for="dict-item-enabled">启用</Label>
+                </div>
+                <div class="space-y-2">
+                    <Label>描述</Label>
+                    <Textarea @bind-Value="item.Description"
+                              Class="min-h-20 w-full"
+                              Placeholder="显示名称、说明或分类路径等" />
                 </div>
                 <div class="space-y-2">
                     <Label>值1</Label>

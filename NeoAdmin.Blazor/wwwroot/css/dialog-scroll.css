@@ -19,3 +19,24 @@
 .max-h-55vh {
   max-height: 55vh;
 }
+
+/**
+ * CrudTable 全屏编辑弹窗（CrudDialogContentSize.FullScreen）。
+ * 覆盖 NeoUI DialogContent 默认 left/top 50% 居中、max-w-lg 与 translate。
+ */
+.crud-dialog-fullscreen {
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: translate(0, 0) !important;
+  translate: none !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}

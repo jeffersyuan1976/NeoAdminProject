@@ -15,6 +15,9 @@ public enum CrudDialogContentSize
     X5l,
     X6l,
     X7l,
+
+    /// <summary>全屏编辑弹窗（占满视口，见 wwwroot/css/dialog-scroll.css）。</summary>
+    FullScreen,
 }
 
 public static class CrudDialogContentSizeExtensions
@@ -24,6 +27,12 @@ public static class CrudDialogContentSizeExtensions
     /// 样式见 wwwroot/css/dialog-scroll.css 中的 top-[8vh]。
     /// </summary>
     public const string AnchorTopClass = "top-[8vh] translate-y-0";
+
+    /// <summary>全屏弹窗 Class，覆盖 NeoUI DialogContent 默认居中与 max-width。</summary>
+    public const string FullScreenDialogClass = "crud-dialog-fullscreen";
+
+    public static bool IsFullScreen(this CrudDialogContentSize size) =>
+        size == CrudDialogContentSize.FullScreen;
 
     public static string ToClass(this CrudDialogContentSize size) => size switch
     {
@@ -37,10 +46,23 @@ public static class CrudDialogContentSizeExtensions
         CrudDialogContentSize.X5l => "sm:max-w-5xl",
         CrudDialogContentSize.X6l => "sm:max-w-6xl",
         CrudDialogContentSize.X7l => "sm:max-w-7xl",
+        CrudDialogContentSize.FullScreen => FullScreenDialogClass,
         _ => "sm:max-w-2xl",
     };
 
     /// <summary>弹窗宽度 + 顶部锚定 Class，供 CrudTable / NeoAllocTable 等编辑对话框使用。</summary>
     public static string ToDialogClass(this CrudDialogContentSize size) =>
-        $"{size.ToClass()} {AnchorTopClass}";
+        size.IsFullScreen()
+            ? FullScreenDialogClass
+            : $"{size.ToClass()} {AnchorTopClass}";
+
+    /// <summary>编辑区滚动容器 Class；全屏时使用 flex-1 占满剩余高度。</summary>
+    public static string ToEditorBodyClass(this CrudDialogContentSize size) =>
+        size.IsFullScreen()
+            ? "min-h-0 flex-1 space-y-4 overflow-y-auto p-2"
+            : "max-h-[70vh] space-y-4 overflow-y-auto p-2";
+
+    /// <summary>全屏时 EditForm 需纵向 flex 布局以撑满弹窗。</summary>
+    public static string? ToEditFormClass(this CrudDialogContentSize size) =>
+        size.IsFullScreen() ? "flex min-h-0 flex-1 flex-col" : null;
 }

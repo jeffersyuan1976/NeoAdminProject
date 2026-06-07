@@ -216,7 +216,7 @@
 {
     <Dialog Open="@editorOpen" OpenChanged="HandleEditorOpenChanged">
         <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToDialogClass()" CloseOnEscape="false">
-            <DialogHeader>
+            <DialogHeader Class="@(DialogContentSize.IsFullScreen() ? "shrink-0" : null)">
                 <DialogTitle>
                     @(isViewMode? ViewText : (isNewItem ? AddText : EditText)) @Title
                 </DialogTitle>
@@ -226,7 +226,7 @@
             </DialogHeader>
             @if (isViewMode)
             {
-                <div class="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+                <div class="@DialogContentSize.ToEditorBodyClass()">
                     @if (ViewTemplate != null)
                     {
                         @ViewTemplate(editor)
@@ -238,7 +238,7 @@
                         </fieldset>
                     }
                 </div>
-                <DialogFooter Class="mt-4">
+                <DialogFooter Class="@(DialogContentSize.IsFullScreen() ? "mt-4 shrink-0" : "mt-4")">
                     <Button Variant="ButtonVariant.Outline" Type="ButtonType.Button"
                         OnClick="@(() => HandleEditorOpenChanged(false))">
                         关闭
@@ -247,13 +247,13 @@
             }
             else
             {
-                <EditForm Model="@editor" OnValidSubmit="HandleSaveSubmit">
+                <EditForm Model="@editor" OnValidSubmit="HandleSaveSubmit" class="@DialogContentSize.ToEditFormClass()">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="mb-3 text-sm text-red-600" />
-                    <div class="max-h-[70vh] space-y-4 overflow-y-auto p-2">
+                    <div class="@DialogContentSize.ToEditorBodyClass()">
                         @EditTemplate!(editor)
                     </div>
-                    <DialogFooter Class="mt-4">
+                    <DialogFooter Class="@(DialogContentSize.IsFullScreen() ? "mt-4 shrink-0" : "mt-4")">
                         <div class="flex w-full flex-col-reverse flex-wrap gap-2 sm:flex-row sm:items-center sm:justify-end">
                             @if (EditDialogFooterLeading != null)
                             {
