@@ -24,6 +24,21 @@
  * CrudTable 全屏编辑弹窗（CrudDialogContentSize.FullScreen）。
  * 覆盖 NeoUI DialogContent 默认 left/top 50% 居中、max-w-lg 与 translate。
  */
+/**
+ * CrudTable 编辑弹窗最大化按钮：与 NeoUI 关闭钮（right-4 top-4）对齐，位于其左侧。
+ * NeoUI components.css 无 right-8+，故用自定义定位。
+ */
+.crud-dialog-maximize-trigger {
+  position: absolute;
+  top: 18px;
+  right: 2.75rem;
+  z-index: 10;
+  display: inline-flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
 .crud-dialog-fullscreen {
   inset: 0 !important;
   top: 0 !important;

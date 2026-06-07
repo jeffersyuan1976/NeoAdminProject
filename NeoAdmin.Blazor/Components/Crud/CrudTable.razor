@@ -215,8 +215,16 @@
 @if (CanShowEditor)
 {
     <Dialog Open="@editorOpen" OpenChanged="HandleEditorOpenChanged">
-        <DialogContent Variant="DialogContentVariant.Form" Class="@DialogContentSize.ToDialogClass()" CloseOnEscape="false">
-            <DialogHeader Class="@(DialogContentSize.IsFullScreen() ? "shrink-0" : null)">
+        <DialogContent Variant="DialogContentVariant.Form" Class="@EditorDialogClass" CloseOnEscape="false">
+            @if (EditorDialogMaximizable)
+            {
+                <span class="crud-dialog-maximize-trigger opacity-70 transition-opacity hover:opacity-100"
+                      title="@(editorDialogMaximized ? "还原" : "最大化")"
+                      @onclick="ToggleEditorDialogMaximized">
+                    <LucideIcon Name="@(editorDialogMaximized ? "shrink" : "expand")" Size="12" />
+                </span>
+            }
+            <DialogHeader Class="@EditorDialogHeaderClass">
                 <DialogTitle>
                     @(isViewMode? ViewText : (isNewItem ? AddText : EditText)) @Title
                 </DialogTitle>
@@ -226,7 +234,7 @@
             </DialogHeader>
             @if (isViewMode)
             {
-                <div class="@DialogContentSize.ToEditorBodyClass()">
+                <div class="@EditorDialogEditorBodyClass">
                     @if (ViewTemplate != null)
                     {
                         @ViewTemplate(editor)
@@ -238,7 +246,7 @@
                         </fieldset>
                     }
                 </div>
-                <DialogFooter Class="@(DialogContentSize.IsFullScreen() ? "mt-4 shrink-0" : "mt-4")">
+                <DialogFooter Class="@(EditorDialogIsFullScreen ? "mt-4 shrink-0" : "mt-4")">
                     <Button Variant="ButtonVariant.Outline" Type="ButtonType.Button"
                         OnClick="@(() => HandleEditorOpenChanged(false))">
                         关闭
@@ -247,13 +255,13 @@
             }
             else
             {
-                <EditForm Model="@editor" OnValidSubmit="HandleSaveSubmit" class="@DialogContentSize.ToEditFormClass()">
+                <EditForm Model="@editor" OnValidSubmit="HandleSaveSubmit" class="@EditorDialogEditFormClass">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="mb-3 text-sm text-red-600" />
-                    <div class="@DialogContentSize.ToEditorBodyClass()">
+                    <div class="@EditorDialogEditorBodyClass">
                         @EditTemplate!(editor)
                     </div>
-                    <DialogFooter Class="@(DialogContentSize.IsFullScreen() ? "mt-4 shrink-0" : "mt-4")">
+                    <DialogFooter Class="@(EditorDialogIsFullScreen ? "mt-4 shrink-0" : "mt-4")">
                         <div class="flex w-full flex-col-reverse flex-wrap gap-2 sm:flex-row sm:items-center sm:justify-end">
                             @if (EditDialogFooterLeading != null)
                             {
@@ -388,6 +396,12 @@
     [Parameter] public string RemoveText { get; set; } = "删除";
     [Parameter] public CrudDialogContentSize DialogContentSize { get; set; } = CrudDialogContentSize.X2l;
 
+    /// <summary>编辑弹窗是否显示最大化/还原按钮。</summary>
+    [Parameter] public bool EditorDialogMaximizable { get; set; }
+
+    /// <summary>打开编辑弹窗时是否默认全屏。</summary>
+    [Parameter] public bool EditorDialogOpenMaximized { get; set; }
+
     [Parameter] public RenderFragment? Columns { get; set; }
     [Parameter] public RenderFragment<TItem>? EditTemplate { get; set; }
     [Parameter] public RenderFragment<TItem>? ViewTemplate { get; set; }
@@ -448,6 +462,7 @@
     private bool isLoading;
 
     private bool editorOpen;
+    private bool editorDialogMaximized;
     private bool isNewItem;
     private bool isViewMode;
     private TItem editor = new();
@@ -465,6 +480,33 @@
     private bool canRowView = true;
     private bool canRowEdit = true;
     private bool canRowRemove = true;
+
+    private bool EditorDialogIsFullScreen =>
+        editorDialogMaximized || DialogContentSize.IsFullScreen();
+
+    private string EditorDialogClass =>
+        EditorDialogIsFullScreen
+            ? CrudDialogContentSize.FullScreen.ToDialogClass()
+            : DialogContentSize.ToDialogClass();
+
+    private string EditorDialogEditorBodyClass =>
+        EditorDialogIsFullScreen
+            ? CrudDialogContentSize.FullScreen.ToEditorBodyClass()
+            : DialogContentSize.ToEditorBodyClass();
+
+    private string? EditorDialogEditFormClass =>
+        EditorDialogIsFullScreen
+            ? CrudDialogContentSize.FullScreen.ToEditFormClass()
+            : DialogContentSize.ToEditFormClass();
+
+    private string? EditorDialogHeaderClass =>
+        (EditorDialogIsFullScreen, EditorDialogMaximizable) switch
+        {
+            (true, true) => "shrink-0 pr-10",
+            (true, false) => "shrink-0",
+            (false, true) => "pr-10",
+            _ => null
+        };
 
     private bool IsPaged => effectivePageSize > 0;
     private int DataTablePageSize => IsPaged ? effectivePageSize : int.MaxValue;
@@ -992,7 +1034,7 @@
         editor = item ?? new TItem();
         isNewItem = true;
         isViewMode = false;
-        editorOpen = true;
+        OpenEditorDialog();
         if (OnEdit.HasDelegate)
         {
             await OnEdit.InvokeAsync(editor);
@@ -1004,7 +1046,7 @@
         editor = CloneItem(item);
         isNewItem = false;
         isViewMode = false;
-        editorOpen = true;
+        OpenEditorDialog();
         if (OnEdit.HasDelegate)
         {
             await OnEdit.InvokeAsync(editor);
@@ -1023,7 +1065,7 @@
         editor = CloneItem(item);
         isNewItem = false;
         isViewMode = true;
-        editorOpen = true;
+        OpenEditorDialog();
         if (OnEdit.HasDelegate)
         {
             await OnEdit.InvokeAsync(editor);
@@ -1317,10 +1359,22 @@
         }
     }
 
+    private void OpenEditorDialog()
+    {
+        editorDialogMaximized = EditorDialogOpenMaximized;
+        editorOpen = true;
+    }
+
+    private void ToggleEditorDialogMaximized()
+    {
+        editorDialogMaximized = !editorDialogMaximized;
+    }
+
     private async Task CloseEditorAsync()
     {
         TItem? closingItem = editorOpen ? editor : null;
         editorOpen = false;
+        editorDialogMaximized = false;
         isViewMode = false;
 
         if (closingItem != null && OnEditClose.HasDelegate)
@@ -1369,7 +1423,7 @@
         }
         else
         {
-            editorOpen = true;
+            OpenEditorDialog();
         }
     }
 
