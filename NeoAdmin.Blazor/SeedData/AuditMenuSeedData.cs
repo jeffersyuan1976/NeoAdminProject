@@ -20,7 +20,7 @@ public static class AuditMenuSeedData
         }
     }
 
-    /// <summary>移除已废弃的二审～五审按钮权限点。</summary>
+    /// <summary>移除已废弃的五审按钮权限点。</summary>
     public static void RemoveObsoleteStepButtons(IFreeSql freeSql)
     {
         List<long> menuIds = freeSql.Select<SysMenu>()

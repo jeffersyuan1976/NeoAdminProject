@@ -28,7 +28,7 @@
                TItem="SysMenu"
                Title="菜单管理"
                PageSize="0"
-               IsSearchText="false"
+               SearchPlaceholder="名称/路径/备注"
                IsAdd="true"
                IsEdit="true"
                IsRemove="true"
@@ -196,9 +196,17 @@
                     <Checkbox @bind-Checked="generateCrudButtons" Id="menu-generate-crud-buttons" />
                     <Label for="menu-generate-crud-buttons">生成添加、编辑、删除按钮权限点</Label>
                 </div>
-                <div class="flex items-center gap-2">
-                    <Checkbox @bind-Checked="generateAuditButtons" Id="menu-generate-audit-buttons" />
-                    <Label for="menu-generate-audit-buttons">生成审批流按钮权限点（提交、一审、拒绝、反审、历史版本）</Label>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    @foreach (AuditButtonOption option in auditButtonOptions)
+                    {
+                        string inputId = $"menu-audit-{option.Path}";
+                        <div class="flex items-center gap-2" @key="option.Path">
+                            <Checkbox Id="@inputId"
+                                      Checked="option.Selected"
+                                      CheckedChanged="@(value => OnAuditButtonChanged(option.Path, value))" />
+                            <Label For="@inputId" Class="cursor-pointer font-normal">@option.Label</Label>
+                        </div>
+                    }
                 </div>
             </div>
         </EditTemplate>
@@ -210,7 +218,9 @@
     private List<SysMenu> flatMenus = new();
     private Dictionary<long, int> menuLevels = new();
     private bool generateCrudButtons;
-    private bool generateAuditButtons;
+    private readonly List<AuditButtonOption> auditButtonOptions = AuditMenuDefinitions.CreateAuditButtons()
+        .Select(button => new AuditButtonOption(button.Path, button.Label))
+        .ToList();
     private string? message;
     private AlertVariant messageVariant = AlertVariant.Default;
 
@@ -269,6 +279,17 @@
                 : query.Where(a => a.SidebarStyle != SysMenuSidebarStyle.收起);
         }
 
+        if (!string.IsNullOrWhiteSpace(e.SearchText))
+        {
+            HashSet<long> matchedIds = flatMenus
+                .Where(menu => MenuMatchesSearch(menu, e.SearchText!))
+                .Select(menu => menu.Id)
+                .ToHashSet();
+
+            HashSet<long> visibleIds = IncludeMenuAncestors(matchedIds, flatMenus);
+            query = query.Where(menu => visibleIds.Contains(menu.Id));
+        }
+
         e.Queryable = query;
     }
 
@@ -295,7 +316,7 @@
             SidebarStyle = item.SidebarStyle,
             IsHidden = item.IsHidden,
             GenerateCrudButtons = generateCrudButtons,
-            GenerateAuditButtons = generateAuditButtons
+            AuditButtonPaths = auditButtonOptions.Where(option => option.Selected).Select(option => option.Path).ToList()
         };
 
         ApiResult<SysMenu> result = await MenuService.SaveAsync(model);
@@ -343,7 +364,7 @@
         if (item.Id == 0)
         {
             generateCrudButtons = false;
-            generateAuditButtons = false;
+            ResetAuditButtonSelection();
             if (item.ParentId > 0)
             {
                 item.Sort = GetNextSortLocal(item.ParentId);
@@ -362,15 +383,52 @@
         else
         {
             generateCrudButtons = item.Type == SysMenuType.增删改查;
-            generateAuditButtons = HasAuditButtons(item.Id);
+            LoadAuditButtonSelection(item.Id);
         }
 
         ClearMessage();
         return Task.CompletedTask;
     }
 
-    private bool HasAuditButtons(long menuId) =>
-        flatMenus.Any(a => a.ParentId == menuId && AuditMenuDefinitions.AllButtonPaths.Contains(a.Path));
+    private void ResetAuditButtonSelection()
+    {
+        foreach (AuditButtonOption option in auditButtonOptions)
+        {
+            option.Selected = false;
+        }
+    }
+
+    private void LoadAuditButtonSelection(long menuId)
+    {
+        HashSet<string> existingPaths = flatMenus
+            .Where(menu => menu.ParentId == menuId && AuditMenuDefinitions.AllButtonPaths.Contains(menu.Path))
+            .Select(menu => menu.Path)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (AuditButtonOption option in auditButtonOptions)
+        {
+            option.Selected = existingPaths.Contains(option.Path);
+        }
+    }
+
+    private void OnAuditButtonChanged(string path, bool selected)
+    {
+        AuditButtonOption? option = auditButtonOptions.FirstOrDefault(item => item.Path == path);
+        if (option is null || option.Selected == selected)
+        {
+            return;
+        }
+
+        option.Selected = selected;
+        StateHasChanged();
+    }
+
+    private sealed class AuditButtonOption(string path, string label)
+    {
+        public string Path { get; } = path;
+        public string Label { get; } = label;
+        public bool Selected { get; set; }
+    }
 
     private SysMenu? FindMenu(long id)
     {
@@ -406,6 +464,28 @@
 
         Walk(menus, 0);
         return result;
+    }
+
+    private static bool MenuMatchesSearch(SysMenu menu, string searchText) =>
+        menu.Label.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+        || menu.Path.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+        || menu.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase);
+
+    private static HashSet<long> IncludeMenuAncestors(HashSet<long> matchedIds, IReadOnlyList<SysMenu> allMenus)
+    {
+        Dictionary<long, SysMenu> menuMap = allMenus.ToDictionary(menu => menu.Id);
+        HashSet<long> visibleIds = new(matchedIds);
+
+        foreach (long id in matchedIds)
+        {
+            long parentId = menuMap[id].ParentId;
+            while (parentId > 0 && visibleIds.Add(parentId))
+            {
+                parentId = menuMap[parentId].ParentId;
+            }
+        }
+
+        return visibleIds;
     }
 
     private static List<SysMenu> FlattenRows(IEnumerable<SysMenu> menus)

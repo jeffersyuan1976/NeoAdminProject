@@ -76,7 +76,7 @@ public static class MenuSeedData
     public static SysMenu Page(string label, string path, int sort, string icon, bool isSystem = true) =>
         Menu(label, icon, path, sort, type: SysMenuType.增删改查, isSystem: isSystem);
 
-    /// <summary>增删改查 + 审批流按钮（提交/一审/拒绝/反审/历史版本）。</summary>
+    /// <summary>增删改查 + 审批流按钮（提交/一审～四审/拒绝/反审/历史版本）。</summary>
     public static SysMenu PageWithAudit(string label, string path, int sort, string icon, bool isSystem = true) =>
         Menu(label, icon, path, sort, type: SysMenuType.增删改查, children: CreateCrudAndAuditButtons(isSystem), isSystem: isSystem);
 

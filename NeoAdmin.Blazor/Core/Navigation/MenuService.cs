@@ -79,10 +79,7 @@ public sealed class MenuService
             await EnsureCrudButtonsAsync(menu.Id);
         }
 
-        if (model.GenerateAuditButtons)
-        {
-            EnsureAuditButtons(freeSql, menu.Id);
-        }
+        SyncAuditButtons(freeSql, menu.Id, model.AuditButtonPaths);
 
         logger.LogInformation("保存菜单成功：{EntityDesc}", EntityLogHelper.Describe(menu));
         return ApiResult<SysMenu>.Success(menu, "保存成功");
@@ -159,26 +156,64 @@ public sealed class MenuService
         return path.StartsWith('/') ? path : "/" + path;
     }
 
-    public static void EnsureAuditButtons(IFreeSql freeSql, long parentId)
+    public static void EnsureAuditButtons(IFreeSql freeSql, long parentId) =>
+        EnsureAuditButtons(
+            freeSql,
+            parentId,
+            AuditMenuDefinitions.CreateAuditButtons().Select(a => a.Path));
+
+    public static void EnsureAuditButtons(IFreeSql freeSql, long parentId, IEnumerable<string> paths)
     {
+        HashSet<string> pathSet = paths.ToHashSet(StringComparer.Ordinal);
         bool isSystem = freeSql.Select<SysMenu>().Where(a => a.Id == parentId).First(a => a.IsSystem);
-        foreach (SysMenu template in AuditMenuDefinitions.CreateAuditButtons())
+        foreach (SysMenu template in AuditMenuDefinitions.CreateAuditButtons().Where(a => pathSet.Contains(a.Path)))
         {
-            SysMenu? existing = freeSql.Select<SysMenu>()
-                .Where(a => a.ParentId == parentId && a.Path == template.Path)
-                .First();
-            if (existing is null)
-            {
-                SysMenu button = NewButton(parentId, template.Label, template.Path, template.Sort, isSystem);
-                freeSql.Insert(button).ExecuteAffrows();
-            }
-            else if (existing.IsSystem != isSystem)
-            {
-                freeSql.Update<SysMenu>()
-                    .Where(a => a.Id == existing.Id)
-                    .Set(a => a.IsSystem, isSystem)
-                    .ExecuteAffrows();
-            }
+            EnsureAuditButton(freeSql, parentId, template, isSystem);
+        }
+    }
+
+    /// <summary>按编辑页勾选结果创建/删除审批流按钮权限点。</summary>
+    public static void SyncAuditButtons(IFreeSql freeSql, long parentId, IEnumerable<string> selectedPaths)
+    {
+        HashSet<string> pathSet = selectedPaths.ToHashSet(StringComparer.Ordinal);
+        bool isSystem = freeSql.Select<SysMenu>().Where(a => a.Id == parentId).First(a => a.IsSystem);
+
+        foreach (SysMenu template in AuditMenuDefinitions.CreateAuditButtons().Where(a => pathSet.Contains(a.Path)))
+        {
+            EnsureAuditButton(freeSql, parentId, template, isSystem);
+        }
+
+        List<long> removeIds = freeSql.Select<SysMenu>()
+            .Where(menu => menu.ParentId == parentId
+                && AuditMenuDefinitions.AllButtonPaths.Contains(menu.Path)
+                && !pathSet.Contains(menu.Path))
+            .ToList(menu => menu.Id);
+
+        if (removeIds.Count == 0)
+        {
+            return;
+        }
+
+        freeSql.Delete<SysRoleMenu>().Where(link => removeIds.Contains(link.MenuId)).ExecuteAffrows();
+        freeSql.Delete<SysMenu>().Where(menu => removeIds.Contains(menu.Id)).ExecuteAffrows();
+    }
+
+    private static void EnsureAuditButton(IFreeSql freeSql, long parentId, SysMenu template, bool isSystem)
+    {
+        SysMenu? existing = freeSql.Select<SysMenu>()
+            .Where(menu => menu.ParentId == parentId && menu.Path == template.Path)
+            .First();
+        if (existing is null)
+        {
+            SysMenu button = NewButton(parentId, template.Label, template.Path, template.Sort, isSystem);
+            freeSql.Insert(button).ExecuteAffrows();
+        }
+        else if (existing.IsSystem != isSystem)
+        {
+            freeSql.Update<SysMenu>()
+                .Where(menu => menu.Id == existing.Id)
+                .Set(menu => menu.IsSystem, isSystem)
+                .ExecuteAffrows();
         }
     }
 

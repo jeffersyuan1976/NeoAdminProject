@@ -32,7 +32,8 @@ public sealed class MenuEditModel
 
     public bool GenerateCrudButtons { get; set; }
 
-    public bool GenerateAuditButtons { get; set; }
+    /// <summary>要生成的审批流按钮 Path（audit_00、audit_01 等）。</summary>
+    public List<string> AuditButtonPaths { get; set; } = [];
 
     public static MenuEditModel FromEntity(SysMenu menu) => new()
     {

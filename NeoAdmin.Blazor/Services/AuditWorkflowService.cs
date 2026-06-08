@@ -47,8 +47,9 @@ public sealed class AuditWorkflowService
             return new AuditMenuContext();
         }
 
+        // 业务页面（isSystem: false）同样挂有 audit_00 / audit_01 等审批按钮，不能按 IsSystem 过滤。
         List<SysMenu> allButtons = await _freeSql.Select<SysMenu>()
-            .Where(a => a.ParentId == pageMenu.Id && a.Type == SysMenuType.按钮 && a.IsSystem)
+            .Where(a => a.ParentId == pageMenu.Id && a.Type == SysMenuType.按钮)
             .OrderBy(a => a.Sort)
             .ToListAsync();
 
