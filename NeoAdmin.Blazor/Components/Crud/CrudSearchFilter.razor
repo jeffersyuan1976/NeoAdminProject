@@ -73,7 +73,15 @@
     [Parameter, EditorRequired]
     public CrudQueryInfo QueryInfo { get; set; } = default!;
 
+    [Parameter]
+    public bool FilterExpanded { get; set; } = true;
+
     private bool collapsibleOpen = true;
+
+    protected override void OnInitialized()
+    {
+        collapsibleOpen = FilterExpanded;
+    }
 
     private bool HasActiveFilters =>
         QueryInfo.Filters.Any(filter => filter.Options.Length > 0 && filter.HasValue);
