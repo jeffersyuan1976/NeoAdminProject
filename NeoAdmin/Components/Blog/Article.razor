@@ -57,7 +57,7 @@
             </DataTableColumn>
         </Columns>
         <EditTemplate Context="item">
-            <Tabs DefaultValue="content" Class="w-full">
+            <Tabs DefaultValue="content" Class="w-full min-w-0 overflow-hidden">
                 <TabsList>
                     <TabsTrigger Value="content">随笔</TabsTrigger>
                     <TabsTrigger Value="settings">设置</TabsTrigger>
@@ -202,7 +202,7 @@
                 </TabsContent>
                 @if (item.Id > 0)
                 {
-                    <TabsContent Value="audit" Class="mt-4">
+                    <TabsContent Value="audit" Class="mt-4 min-w-0 max-w-full overflow-hidden">
                         <CrudAuditPanel Item="item"
                                         EntityType="typeof(BlogArticle)"
                                         MenuPath="/Blog/Article"

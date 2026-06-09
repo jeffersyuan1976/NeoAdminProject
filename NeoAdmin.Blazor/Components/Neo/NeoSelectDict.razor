@@ -5,7 +5,7 @@
 
 <NativeSelect TValue="string"
               Class="w-full"
-              Placeholder="请选择.."
+              Placeholder="@Placeholder"
               Disabled="@Disabled"
               @bind-Value="Value"
               @bind-Value:after="NotifyValueChanged">
@@ -36,6 +36,9 @@
 
     [Parameter]
     public bool Disabled { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = "请选择..";
 
     private List<SysDict> items = new();
 

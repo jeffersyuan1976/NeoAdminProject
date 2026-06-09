@@ -90,6 +90,12 @@ public sealed class AuditWorkflowService
         AuditMenuContext menu,
         string opinion)
     {
+        ApiResult<EntityAudited>? opinionError = RequireOpinion(opinion);
+        if (opinionError is not null)
+        {
+            return opinionError;
+        }
+
         string tableName = _freeSql.CodeFirst.GetTableByEntity(entityType).DbName;
         SysAuditLog? auditLog = null;
         string actionName = "提交";
@@ -155,9 +161,10 @@ public sealed class AuditWorkflowService
         AuditMenuContext menu,
         string opinion)
     {
-        if (string.IsNullOrWhiteSpace(opinion))
+        ApiResult<EntityAudited>? opinionError = RequireOpinion(opinion);
+        if (opinionError is not null)
         {
-            return ApiResult<EntityAudited>.Error("处理意见不能为空");
+            return opinionError;
         }
 
         if (!await _permissionService.HasButtonAsync(menuPath, "audit_99"))
@@ -216,9 +223,10 @@ public sealed class AuditWorkflowService
         string menuPath,
         string opinion)
     {
-        if (string.IsNullOrWhiteSpace(opinion))
+        ApiResult<EntityAudited>? opinionError = RequireOpinion(opinion);
+        if (opinionError is not null)
         {
-            return ApiResult<EntityAudited>.Error("处理意见不能为空");
+            return opinionError;
         }
 
         if (!await _permissionService.HasButtonAsync(menuPath, "audit_98"))
@@ -347,6 +355,11 @@ public sealed class AuditWorkflowService
             throw;
         }
     }
+
+    private static ApiResult<EntityAudited>? RequireOpinion(string opinion) =>
+        string.IsNullOrWhiteSpace(opinion)
+            ? ApiResult<EntityAudited>.Error("处理意见不能为空")
+            : null;
 
     private async Task FillAuditLogUserAsync(SysAuditLog auditLog)
     {

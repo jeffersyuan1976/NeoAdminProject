@@ -59,8 +59,8 @@ public static class CrudDialogContentSizeExtensions
     /// <summary>编辑区滚动容器 Class；全屏时使用 flex-1 占满剩余高度。</summary>
     public static string ToEditorBodyClass(this CrudDialogContentSize size) =>
         size.IsFullScreen()
-            ? "min-h-0 flex-1 space-y-4 overflow-y-auto p-2"
-            : "max-h-[70vh] space-y-4 overflow-y-auto p-2";
+            ? "min-h-0 min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto p-2"
+            : "max-h-[70vh] min-w-0 space-y-4 overflow-x-hidden overflow-y-auto p-2";
 
     /// <summary>全屏时 EditForm 需纵向 flex 布局以撑满弹窗。</summary>
     public static string? ToEditFormClass(this CrudDialogContentSize size) =>

@@ -19,6 +19,33 @@
   overflow: hidden;
 }
 
+/* CrudAuditPanel：历史版本 JSON 在弹窗内换行/滚动，避免撑破对话框宽度 */
+.crud-audit-panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.crud-audit-panel [role="tabpanel"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.crud-audit-json {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 /* 列表纵向滚动时固定表头（滚动容器为 DataTable 的 overflow-y-auto 外层） */
 .crud-table [data-keyboard-nav] thead th {
   position: sticky;

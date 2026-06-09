@@ -3,6 +3,7 @@
 @using NeoAdmin.Blazor.Core.Identity
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Services
+@using System.Text.Json
 @inject AuditWorkflowService AuditWorkflow
 @inject MenuPermissionService MenuPermission
 @inject IToastService ToastService
@@ -13,100 +14,142 @@
 }
 else
 {
-    <div class="rounded-lg border bg-muted/30 p-4 space-y-4">
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-            <span class="font-medium">审批状态：</span>
-            <Badge Variant="@AuditWorkflowRules.GetStatusBadgeVariant(Item.AuditStatus)"
-                   Class="@AuditWorkflowRules.GetStatusBadgeClass(Item.AuditStatus)">@AuditWorkflowRules.GetStatusLabel(Item.AuditStatus)</Badge>
-            <span class="text-muted-foreground">步骤：@(MenuContext?.GetStepLabel(Item.AuditStep) ?? Item.AuditStep)</span>
-            <span class="text-muted-foreground">版本：@Item.AuditVersion</span>
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(hintMessage))
-        {
-            <p class="text-sm text-amber-700">@hintMessage</p>
-        }
-
-        <div class="space-y-2">
-            <Label For="audit-opinion">处理意见</Label>
-            <Textarea id="audit-opinion" Class="min-h-20 w-full" MaxLength="500" @bind-Value="opinion" />
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-            @if (showSubmit)
-            {
-                <Button Variant="ButtonVariant.Default" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="SubmitAsync">
-                    @(Item.AuditStatus == SysAuditStatus.审核中 ? "通过" : "提交")
-                </Button>
-            }
-            @if (showBack)
-            {
-                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="BackAsync">
-                    @(Item.AuditStatus is SysAuditStatus.通过 or SysAuditStatus.拒绝 ? "反审" : "退回")
-                </Button>
-            }
-            @if (showRefuse)
-            {
-                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="RefuseAsync">
-                    拒绝
-                </Button>
-            }
-        </div>
-
-        @if (showHistory || showEntityLog)
-        {
-            <Tabs @bind-Value="recordsTab" Class="w-full">
-                <TabsList Class="inline-flex h-auto w-full flex-wrap justify-start gap-1">
-                    @if (showHistory)
-                    {
-                        <TabsTrigger Value="workflow">审批记录</TabsTrigger>
-                    }
-                    @if (showEntityLog)
-                    {
-                        <TabsTrigger Value="versions">历史版本</TabsTrigger>
-                    }
-                </TabsList>
+    <div class="crud-audit-panel min-w-0 rounded-lg border bg-muted/30 p-4 space-y-4">
+        <Tabs @bind-Value="recordsTab" Class="w-full min-w-0 overflow-hidden">
+            <TabsList Class="inline-flex h-auto w-full flex-wrap justify-start gap-1">
+                <TabsTrigger Value="opinion">处理意见</TabsTrigger>
                 @if (showHistory)
                 {
-                    <TabsContent Value="workflow" Class="mt-3">
-                        <div class="max-h-[40vh] overflow-auto rounded-md border bg-background">
+                    <TabsTrigger Value="workflow">审批记录</TabsTrigger>
+                }
+                @if (showEntityLog)
+                {
+                    <TabsTrigger Value="versions">历史版本</TabsTrigger>
+                }
+            </TabsList>
+            <TabsContent Value="opinion" Class="mt-3 space-y-4">
+                @if (!string.IsNullOrWhiteSpace(hintMessage))
+                {
+                    <p class="text-sm text-amber-700">@hintMessage</p>
+                }
+
+                <div class="space-y-2">
+                    <Label For="audit-opinion">
+                        处理意见 <span class="text-destructive" aria-hidden="true">*</span>
+                    </Label>
+                    <Textarea id="audit-opinion"
+                              Class="min-h-20 w-full"
+                              MaxLength="500"
+                              required
+                              @bind-Value="opinion"
+                              @bind-Value:after="ClearOpinionError" />
+                    @if (!string.IsNullOrEmpty(opinionError))
+                    {
+                        <p class="text-xs text-destructive">@opinionError</p>
+                    }
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 text-sm">
+                    <div class="min-w-[10rem]">
+                        <NeoSelectDict ParentName="AuditOpinionPass"
+                                       Placeholder="通过意见"
+                                       Value="@passOpinionTemplate"
+                                       ValueChanged="OnPassOpinionTemplateSelected"
+                                       DisplayText="@GetOpinionTemplateText"
+                                       Disabled="@isBusy" />
+                    </div>
+                    <div class="min-w-[10rem]">
+                        <NeoSelectDict ParentName="AuditOpinionReject"
+                                       Placeholder="未通过意见"
+                                       Value="@rejectOpinionTemplate"
+                                       ValueChanged="OnRejectOpinionTemplateSelected"
+                                       DisplayText="@GetOpinionTemplateText"
+                                       Disabled="@isBusy" />
+                    </div>
+                    <span class="font-medium">审批状态</span>
+                    <Badge Variant="@AuditWorkflowRules.GetStatusBadgeVariant(Item.AuditStatus)"
+                           Class="@AuditWorkflowRules.GetStatusBadgeClass(Item.AuditStatus)">@AuditWorkflowRules.GetStatusLabel(Item.AuditStatus)</Badge>
+                    <span class="text-muted-foreground">步骤：@(MenuContext?.GetStepLabel(Item.AuditStep) ?? Item.AuditStep)</span>
+                    <span class="text-muted-foreground">版本：@Item.AuditVersion</span>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    @if (showSubmit)
+                    {
+                        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="SubmitAsync">
+                            @(Item.AuditStatus == SysAuditStatus.审核中 ? "通过" : "提交")
+                        </Button>
+                    }
+                    @if (showBack)
+                    {
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="BackAsync">
+                            @(Item.AuditStatus is SysAuditStatus.通过 or SysAuditStatus.拒绝 ? "反审" : "退回")
+                        </Button>
+                    }
+                    @if (showRefuse)
+                    {
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Disabled="@isBusy" OnClick="RefuseAsync">
+                            拒绝
+                        </Button>
+                    }
+                </div>
+            </TabsContent>
+            @if (showHistory)
+            {
+                <TabsContent Value="workflow" Class="mt-3">
+                        <div class="max-h-[40vh] overflow-auto rounded-md border bg-background p-4">
                             @if (workflowLogs.Count == 0)
                             {
                                 <p class="text-sm text-muted-foreground py-6 text-center">暂无审批记录</p>
                             }
                             else
                             {
-                                <table class="w-full text-sm">
-                                    <thead>
-                                        <tr class="border-b text-left text-muted-foreground">
-                                            <th class="py-2 px-3">步骤</th>
-                                            <th class="py-2 px-3">结果</th>
-                                            <th class="py-2 px-3">意见</th>
-                                            <th class="py-2 px-3">操作人</th>
-                                            <th class="py-2 px-3">时间</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (SysAuditLog log in workflowLogs)
-                                        {
-                                            <tr class="border-b border-border/60">
-                                                <td class="py-2 px-3">@(MenuContext?.GetStepLabel(log.Step) ?? log.Step)</td>
-                                                <td class="py-2 px-3">@AuditWorkflowRules.GetStatusLabel(log.Result)</td>
-                                                <td class="py-2 px-3 max-w-[200px] truncate" title="@log.Opinion">@log.Opinion</td>
-                                                <td class="py-2 px-3">@log.CreatedUserName</td>
-                                                <td class="py-2 px-3">@(log.CreatedTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                <Timeline Align="TimelineAlign.Alternate">
+                                    @{
+                                        List<SysAuditLog> orderedLogs = workflowLogs.AsEnumerable().Reverse().ToList();
+                                    }
+                                    @for (var i = 0; i < orderedLogs.Count; i++)
+                                    {
+                                        SysAuditLog log = orderedLogs[i];
+                                        bool isLast = i == orderedLogs.Count - 1;
+                                        <TimelineItem Status="@GetTimelineStatus(log.Result)" ShowConnector="@(!isLast)">
+                                            <IconContent>
+                                                <TimelineIcon Color="@GetTimelineColor(log.Result)">
+                                                    <LucideIcon Name="@GetTimelineIcon(log.Result)" Size="16" />
+                                                </TimelineIcon>
+                                            </IconContent>
+                                            <ChildContent>
+                                                <TimelineContent>
+                                                    <TimelineHeader>
+                                                        <TimelineTitle>@(MenuContext?.GetStepLabel(log.Step) ?? log.Step)</TimelineTitle>
+                                                        <TimelineTime>@(log.CreatedTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</TimelineTime>
+                                                    </TimelineHeader>
+                                                    <TimelineDescription>
+                                                        @AuditWorkflowRules.GetStatusLabel(log.Result)
+                                                        @if (!string.IsNullOrWhiteSpace(log.CreatedUserName))
+                                                        {
+                                                            <span> · @log.CreatedUserName</span>
+                                                        }
+                                                        @if (!string.IsNullOrWhiteSpace(log.Opinion))
+                                                        {
+                                                            <div class="mt-1 text-muted-foreground">@log.Opinion</div>
+                                                        }
+                                                    </TimelineDescription>
+                                                </TimelineContent>
+                                            </ChildContent>
+                                        </TimelineItem>
+                                    }
+                                </Timeline>
                             }
-                        </div>
-                    </TabsContent>
-                }
-                @if (showEntityLog)
-                {
-                    <TabsContent Value="versions" Class="mt-3">
-                        <div class="max-h-[40vh] overflow-auto rounded-md border bg-background p-3 space-y-3">
+                    </div>
+                </TabsContent>
+            }
+            @if (showEntityLog)
+            {
+                <TabsContent Value="versions" Class="mt-3 min-w-0 max-w-full overflow-hidden">
+                    @if (recordsTab == "versions")
+                    {
+                        <div class="max-h-[40vh] w-full min-w-0 overflow-x-hidden overflow-y-auto rounded-md border bg-background p-3 space-y-3">
                             @if (entityLogs.Count == 0)
                             {
                                 <p class="text-sm text-muted-foreground py-6 text-center">暂无变更记录</p>
@@ -115,7 +158,7 @@ else
                             {
                                 @foreach (SysAuditEntityLog log in entityLogs)
                                 {
-                                    <div class="rounded border p-3 text-sm space-y-2">
+                                    <div class="w-full min-w-0 overflow-hidden rounded border p-3 text-sm space-y-2">
                                         <div class="flex flex-wrap gap-3 text-muted-foreground">
                                             <span>@log.LogType</span>
                                             <span>@log.CreatedUserName</span>
@@ -123,26 +166,26 @@ else
                                         </div>
                                         @if (!string.IsNullOrWhiteSpace(log.DataOld))
                                         {
-                                            <details>
+                                            <details class="min-w-0 w-full">
                                                 <summary class="cursor-pointer">变更前</summary>
-                                                <pre class="mt-2 overflow-auto rounded bg-muted p-2 text-xs">@log.DataOld</pre>
+                                                <pre class="crud-audit-json mt-2 rounded bg-muted p-2 font-mono text-xs">@FormatAuditJson(log.DataOld)</pre>
                                             </details>
                                         }
                                         @if (!string.IsNullOrWhiteSpace(log.Data))
                                         {
-                                            <details open>
+                                            <details class="min-w-0 w-full" open>
                                                 <summary class="cursor-pointer">@(log.LogType == "remove" ? "删除快照" : "变更后")</summary>
-                                                <pre class="mt-2 overflow-auto rounded bg-muted p-2 text-xs">@log.Data</pre>
+                                                <pre class="crud-audit-json mt-2 rounded bg-muted p-2 font-mono text-xs">@FormatAuditJson(log.Data)</pre>
                                             </details>
                                         }
                                     </div>
                                 }
                             }
                         </div>
-                    </TabsContent>
-                }
-            </Tabs>
-        }
+                    }
+                </TabsContent>
+            }
+        </Tabs>
     </div>
 }
 
@@ -153,7 +196,12 @@ else
     [Parameter] public EventCallback<EntityAudited> OnChanged { get; set; }
 
     private AuditMenuContext? MenuContext { get; set; }
+    private const string OpinionRequiredMessage = "处理意见不能为空";
+
     private string opinion = string.Empty;
+    private string passOpinionTemplate = string.Empty;
+    private string rejectOpinionTemplate = string.Empty;
+    private string? opinionError;
     private string? hintMessage;
     private bool isBusy;
     private bool showSubmit;
@@ -161,10 +209,82 @@ else
     private bool showRefuse;
     private bool showHistory = true;
     private bool showEntityLog;
-    private string recordsTab = "workflow";
+    private string recordsTab = "opinion";
     private List<SysAuditLog> workflowLogs = [];
     private List<SysAuditEntityLog> entityLogs = [];
     private string tableName = string.Empty;
+
+    private static string GetOpinionTemplateText(SysDict item) =>
+        string.IsNullOrWhiteSpace(item.Description) ? item.Value : item.Description;
+
+    private static string FormatAuditJson(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(raw);
+            return JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return raw;
+        }
+    }
+
+    private Task OnPassOpinionTemplateSelected(string value)
+    {
+        ApplyOpinionTemplate(value, isPass: true);
+        return Task.CompletedTask;
+    }
+
+    private Task OnRejectOpinionTemplateSelected(string value)
+    {
+        ApplyOpinionTemplate(value, isPass: false);
+        return Task.CompletedTask;
+    }
+
+    private void ClearOpinionError()
+    {
+        if (!string.IsNullOrWhiteSpace(opinion))
+        {
+            opinionError = null;
+        }
+    }
+
+    private bool TryValidateOpinion()
+    {
+        if (string.IsNullOrWhiteSpace(opinion))
+        {
+            opinionError = OpinionRequiredMessage;
+            recordsTab = "opinion";
+            return false;
+        }
+
+        opinionError = null;
+        return true;
+    }
+
+    private void ApplyOpinionTemplate(string value, bool isPass)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            opinion = value;
+            opinionError = null;
+        }
+
+        if (isPass)
+        {
+            passOpinionTemplate = string.Empty;
+        }
+        else
+        {
+            rejectOpinionTemplate = string.Empty;
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -196,7 +316,14 @@ else
 
         showRefuse = Item.AuditStatus == SysAuditStatus.审核中 && await MenuPermission.HasButtonAsync(MenuPath, "audit_98");
         showEntityLog = MenuContext.HasEditVersion && await MenuPermission.HasButtonAsync(MenuPath, "edit_version");
-        recordsTab = showHistory ? "workflow" : "versions";
+        if (recordsTab == "workflow" && !showHistory)
+        {
+            recordsTab = showEntityLog ? "versions" : "opinion";
+        }
+        else if (recordsTab == "versions" && !showEntityLog)
+        {
+            recordsTab = showHistory ? "workflow" : "opinion";
+        }
 
         if (!AuditWorkflowRules.CanEdit(Item))
         {
@@ -215,6 +342,12 @@ else
     {
         if (MenuContext is null)
         {
+            return;
+        }
+
+        if (!TryValidateOpinion())
+        {
+            ToastService.Error("操作失败", OpinionRequiredMessage);
             return;
         }
 
@@ -250,6 +383,12 @@ else
             return;
         }
 
+        if (!TryValidateOpinion())
+        {
+            ToastService.Error("操作失败", OpinionRequiredMessage);
+            return;
+        }
+
         isBusy = true;
         try
         {
@@ -277,6 +416,12 @@ else
 
     private async Task RefuseAsync()
     {
+        if (!TryValidateOpinion())
+        {
+            ToastService.Error("操作失败", OpinionRequiredMessage);
+            return;
+        }
+
         isBusy = true;
         try
         {
@@ -310,4 +455,29 @@ else
         }
         await InvokeAsync(StateHasChanged);
     }
+
+    private static TimelineStatus GetTimelineStatus(SysAuditStatus result) => result switch
+    {
+        SysAuditStatus.审核中 => TimelineStatus.InProgress,
+        SysAuditStatus.待提交 => TimelineStatus.Pending,
+        _ => TimelineStatus.Completed,
+    };
+
+    private static TimelineColor GetTimelineColor(SysAuditStatus result) => result switch
+    {
+        SysAuditStatus.通过 => TimelineColor.Primary,
+        SysAuditStatus.拒绝 => TimelineColor.Destructive,
+        SysAuditStatus.退回 => TimelineColor.Secondary,
+        SysAuditStatus.审核中 => TimelineColor.Accent,
+        _ => TimelineColor.Muted,
+    };
+
+    private static string GetTimelineIcon(SysAuditStatus result) => result switch
+    {
+        SysAuditStatus.通过 => "circle-check",
+        SysAuditStatus.拒绝 => "circle-x",
+        SysAuditStatus.退回 => "undo-2",
+        SysAuditStatus.审核中 => "loader-circle",
+        _ => "flag",
+    };
 }
