@@ -53,13 +53,55 @@ internal static class DataDisplayDemoSnippets
         """;
 
     public const string Timeline = """
-        <Timeline>
-            <TimelineItem Title="项目启动" Time="2025-01-10"
-                          Description="完成立项" Status="TimelineStatus.Completed" />
-            <TimelineItem Title="开发中" Time="2025-02-15"
-                          Description="核心功能开发" Status="TimelineStatus.InProgress" />
-            <TimelineItem Title="上线计划" Time="2025-04-01"
-                          Description="待发布" Status="TimelineStatus.Pending" />
+        <Timeline Align="TimelineAlign.Alternate">
+            <TimelineItem Status="TimelineStatus.Completed">
+                <IconContent>
+                    <TimelineIcon Color="TimelineColor.Primary">
+                        <LucideIcon Name="flag" Size="16" />
+                    </TimelineIcon>
+                </IconContent>
+                <ChildContent>
+                    <TimelineContent>
+                        <TimelineHeader>
+                            <TimelineTitle>项目启动</TimelineTitle>
+                            <TimelineTime>2025-01-10</TimelineTime>
+                        </TimelineHeader>
+                        <TimelineDescription>完成立项与资源分配</TimelineDescription>
+                    </TimelineContent>
+                </ChildContent>
+            </TimelineItem>
+            <TimelineItem Status="TimelineStatus.InProgress">
+                <IconContent>
+                    <TimelineIcon Color="TimelineColor.Accent">
+                        <LucideIcon Name="code" Size="16" />
+                    </TimelineIcon>
+                </IconContent>
+                <ChildContent>
+                    <TimelineContent>
+                        <TimelineHeader>
+                            <TimelineTitle>核心开发</TimelineTitle>
+                            <TimelineTime>2025-02-15</TimelineTime>
+                        </TimelineHeader>
+                        <TimelineDescription>表单与权限模块开发中</TimelineDescription>
+                    </TimelineContent>
+                </ChildContent>
+            </TimelineItem>
+            <TimelineItem Status="TimelineStatus.Pending" ShowConnector="false">
+                <IconContent>
+                    <TimelineIcon Color="TimelineColor.Muted">
+                        <LucideIcon Name="package-check" Size="16" />
+                    </TimelineIcon>
+                </IconContent>
+                <ChildContent>
+                    <TimelineContent>
+                        <TimelineHeader>
+                            <TimelineTitle>正式上线</TimelineTitle>
+                            <TimelineTime>2025-04-01</TimelineTime>
+                        </TimelineHeader>
+                        <TimelineDescription>生产环境发布</TimelineDescription>
+                    </TimelineContent>
+                </ChildContent>
+            </TimelineItem>
         </Timeline>
         """;
 }
