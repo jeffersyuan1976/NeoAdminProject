@@ -60,4 +60,4 @@ app.MapRazorComponents<App>()
 | NeoInputTable 无弹窗 | 页面须 `@layout LayoutAdmin` |
 | 样式错乱 | `npm run watch:css` 或 `dotnet build` |
 
-完整文档见本项目 `README.md`。
+完整文档见本项目根目录 `NEOADMIN开发上手.md` 或 `README.md`。

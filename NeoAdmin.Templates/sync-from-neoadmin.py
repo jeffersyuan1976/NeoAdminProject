@@ -77,6 +77,21 @@ def transform_text(text: str) -> str:
     return text
 
 
+def transform_dev_guide(text: str) -> str:
+    """宿主 NEOADMIN开发上手.md → 模板项目（NeoAdminApp、NuGet 消费者）。"""
+    text = transform_text(text)
+    text = text.replace(
+        "业务扩展在宿主项目 **NeoAdmin**（本仓库示例）中完成",
+        "业务扩展在宿主项目 **NeoAdminApp**（本模板项目）中完成",
+    )
+    text = re.sub(
+        r"\npython3 NeoAdmin\.Templates/sync-from-neoadmin\.py\n",
+        "\n",
+        text,
+    )
+    return text
+
+
 def transform_cursor_rule(text: str) -> str:
     """宿主 .cursor/rules → 模板项目（NeoAdminApp、NuGet 消费者）。"""
     text = transform_text(text)
@@ -93,8 +108,16 @@ def transform_cursor_rule(text: str) -> str:
         "",
     )
     text = text.replace(
+        "完整文档见 monorepo 根目录或 `NeoAdmin/NEOADMIN开发上手.md`；宿主项目内见根目录 `NEOADMIN开发上手.md`。",
+        "完整文档见本项目根目录 `NEOADMIN开发上手.md` 或 `README.md`。",
+    )
+    text = text.replace(
+        "完整文档见本项目根目录 `NEOADMIN开发上手.md` 或 `README.md`。",
+        "完整文档见本项目根目录 `NEOADMIN开发上手.md` 或 `README.md`。",
+    )
+    text = text.replace(
         "完整文档见 monorepo 根目录 `NEOADMIN开发上手.md` 或本项目 `README.md`。",
-        "完整文档见本项目 `README.md`。",
+        "完整文档见本项目根目录 `NEOADMIN开发上手.md` 或 `README.md`。",
     )
     return text
 
@@ -128,11 +151,14 @@ def sync_file(src: Path, dst: Path) -> None:
         "_Imports.razor",
         "Routes.razor",
         "App.razor",
+        "NEOADMIN开发上手.md",
     }:
         raw = src.read_text(encoding="utf-8")
         rel = src.relative_to(SOURCE).as_posix()
         if rel.startswith(".cursor/rules/"):
             raw = transform_cursor_rule(raw)
+        elif src.name == "NEOADMIN开发上手.md":
+            raw = transform_dev_guide(raw)
         else:
             raw = transform_text(raw)
         dst.parent.mkdir(parents=True, exist_ok=True)
