@@ -13,6 +13,9 @@ internal static class FreeSqlSchedulerSetup
             entity.Property(a => a.Id).StringLength(30);
             entity.Property(a => a.Topic).StringLength(100);
             entity.Property(a => a.Body).StringLength(-1);
+            // 与 FreeScheduler FreeSqlHandler 一致：枚举持久化为字符串（Running/Paused/Completed）
+            entity.Property(a => a.Status).MapType(typeof(string));
+            entity.Property(a => a.Interval).MapType(typeof(string));
             entity.Property(a => a.IntervalArgument).StringLength(50);
         });
         freeSql.CodeFirst.ConfigEntity<TaskLog>(entity =>
