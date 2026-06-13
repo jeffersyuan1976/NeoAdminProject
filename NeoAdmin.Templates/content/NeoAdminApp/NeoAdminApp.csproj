@@ -25,17 +25,22 @@
     <None Update="neoadmin.db-*" Watch="false" />
   </ItemGroup>
 
+  <!-- 服务器发布可传 -p:SkipTailwindBuild=true 跳过 npm install / build:css -->
+  <PropertyGroup>
+    <SkipTailwindBuild Condition="'$(SkipTailwindBuild)' == ''">false</SkipTailwindBuild>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Remove="package.json" />
     <Content Remove="package-lock.json" />
     <Content Remove="tailwind.config.js" />
   </ItemGroup>
 
-  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json')">
+  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json') And '$(SkipTailwindBuild)' != 'true'">
     <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" />
   </Target>
 
-  <Target Name="BuildTailwindCss" BeforeTargets="Build" Condition="Exists('$(ProjectDir)package.json')">
+  <Target Name="BuildTailwindCss" BeforeTargets="Build" Condition="Exists('$(ProjectDir)package.json') And '$(SkipTailwindBuild)' != 'true'">
     <Exec Command="npm run build:css" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>

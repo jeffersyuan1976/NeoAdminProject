@@ -14,15 +14,9 @@ COPY . .
 WORKDIR /src/NeoAdmin
 
 # 发布项目（.NET 10：publish 勿加 --no-restore，否则不会生成 wwwroot/_framework/blazor.web.js）
-# dotnet publish 会通过 MSBuild 执行 npm run build:css，需 Node.js
+# SkipTailwindBuild：不在镜像内跑 npm，使用 COPY 带入的 wwwroot/css/tailwind.css
 FROM build AS publish
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish
+RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish -p:SkipTailwindBuild=true
 
 # 第二阶段：运行阶段
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
