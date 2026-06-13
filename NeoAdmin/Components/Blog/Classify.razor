@@ -1,8 +1,15 @@
 @page "/Blog/Classify"
 @namespace NeoAdmin.Components.Blog
 @layout LayoutAdmin
+@using Microsoft.AspNetCore.Components.Forms
 @using NeoAdmin.Blazor.Components
+@using NeoAdmin.Blazor.Extensions
+@using NeoAdmin.Blazor.Services
 @inject IFreeSql FreeSql
+@inject FileService FileService
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject ILogger<Classify> Logger
 
 <PageTitle>随笔专栏</PageTitle>
 
@@ -11,11 +18,10 @@
                TItem="BlogClassify"
                Title="随笔专栏"
                PageSize="50"
-               IsMultiSelect="false"
-               IsSingleSelect="false"
                SearchPlaceholder="专栏名称 / 创建者.."
                InitQuery="InitQuery"
                OnQuery="HandleQuery"
+               OnEdit="HandleEdit"
                DialogContentSize="CrudDialogContentSize.Lg">
         <Columns>
             <DataTableColumn TData="CrudGridRow<BlogClassify>"
@@ -45,9 +51,19 @@
                              TValue="string"
                              Property="@(row => row.Item.Thumbnail)"
                              Header="封面图"
-                             Sortable="false">
+                             Sortable="false"
+                             Width="96px">
                 <CellTemplate Context="row">
-                    <span class="block truncate" title="@row.Item.Thumbnail">@row.Item.Thumbnail</span>
+                    @if (!string.IsNullOrWhiteSpace(row.Item.Thumbnail))
+                    {
+                        <img src="@NavigationManager.ToMediaUrl(row.Item.Thumbnail)"
+                             alt="封面图"
+                             class="h-10 w-10 rounded border object-cover" />
+                    }
+                    else
+                    {
+                        <span class="text-muted-foreground">-</span>
+                    }
                 </CellTemplate>
             </DataTableColumn>
             <DataTableColumn TData="CrudGridRow<BlogClassify>"
@@ -90,7 +106,30 @@
             </div>
             <div class="space-y-2">
                 <Label For="classify-thumb">封面图</Label>
-                <Input id="classify-thumb" Class="w-full" MaxLength="100" @bind-Value="item.Thumbnail" />
+                @if (!string.IsNullOrWhiteSpace(item.Thumbnail))
+                {
+                    <div class="rounded-lg border bg-muted/30 p-3">
+                        <p class="mb-2 text-xs text-muted-foreground">当前封面</p>
+                        <img src="@NavigationManager.ToMediaUrl(item.Thumbnail)"
+                             alt="封面预览"
+                             class="h-32 max-w-full rounded-md border bg-background object-cover" />
+                    </div>
+                    <Button Type="ButtonType.Button"
+                            Variant="ButtonVariant.Ghost"
+                            Size="ButtonSize.Small"
+                            OnClick="@(() => ClearThumbnail(item))">
+                        清除封面
+                    </Button>
+                }
+                <FileUpload @ref="thumbnailUpload"
+                            Files="thumbnailFiles"
+                            FilesChanged="@(files => OnThumbnailFilesChangedAsync(item, files))"
+                            Multiple="false"
+                            Accept="image/*"
+                            MaxFileSize="5242880"
+                            ShowPreview="true"
+                            Disabled="isUploadingThumbnail" />
+                <p class="text-xs text-muted-foreground">仅支持图片，最大 5MB；选择后自动上传。</p>
             </div>
         </EditTemplate>
     </CrudTable>
@@ -98,6 +137,9 @@
 
 @code {
     private CrudTable<BlogClassify> table = default!;
+    private FileUpload? thumbnailUpload;
+    private List<IBrowserFile> thumbnailFiles = [];
+    private bool isUploadingThumbnail;
 
     private Task InitQuery(CrudQueryInfo e)
     {
@@ -112,5 +154,56 @@
                 a => a.ClassifyName.Contains(e.SearchText!)
                      || a.CreatedUserName.Contains(e.SearchText!))
             .OrderByDescending(a => a.Id);
+    }
+
+    private Task HandleEdit(BlogClassify item)
+    {
+        thumbnailFiles = [];
+        isUploadingThumbnail = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnThumbnailFilesChangedAsync(BlogClassify item, List<IBrowserFile> files)
+    {
+        thumbnailFiles = files;
+        if (files.Count == 0 || isUploadingThumbnail)
+        {
+            return;
+        }
+
+        isUploadingThumbnail = true;
+        Logger.LogInformation("上传随笔专栏封面开始，ClassifyId={ClassifyId}", item.Id);
+        try
+        {
+            var file = await FileService.UploadFileAsync(files[0], "blog/classify", isRename: true);
+            item.Thumbnail = file.LinkUrl;
+            ToastService.Success("封面图", "上传成功");
+            Logger.LogInformation("上传随笔专栏封面成功，ClassifyId={ClassifyId}，Url={Url}", item.Id, file.LinkUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "上传随笔专栏封面失败，ClassifyId={ClassifyId}", item.Id);
+            ToastService.Error("封面图上传失败", ex.Message);
+        }
+        finally
+        {
+            thumbnailFiles = [];
+            if (thumbnailUpload is not null)
+            {
+                await thumbnailUpload.ClearFiles();
+            }
+
+            isUploadingThumbnail = false;
+        }
+    }
+
+    private async Task ClearThumbnail(BlogClassify item)
+    {
+        item.Thumbnail = string.Empty;
+        thumbnailFiles = [];
+        if (thumbnailUpload is not null)
+        {
+            await thumbnailUpload.ClearFiles();
+        }
     }
 }

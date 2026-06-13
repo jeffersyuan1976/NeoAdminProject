@@ -262,7 +262,6 @@ multiple: true,
 col: 6,
 string.Join(",", tags.Select(a => a.TagName)),
 string.Join(",", tags.Select(a => a.Id))),
-new CrudFilterInfo("标题", "Title", CrudFilterType.Text, 6),
 ];
     }
 
@@ -274,7 +273,6 @@ new CrudFilterInfo("标题", "Title", CrudFilterType.Text, 6),
         CrudFilterInfo auditFilter = GetFilter(e, "AuditStatus");
         CrudFilterInfo collectionFilter = GetFilter(e, "Collections");
         CrudFilterInfo tagFilter = GetFilter(e, "Tags");
-        CrudFilterInfo titleFilter = GetFilter(e, "Title");
 
         e.Select!
         .Include(a => a.Classify)
@@ -291,8 +289,6 @@ new CrudFilterInfo("标题", "Title", CrudFilterType.Text, 6),
         a => FreeSql.Select<BlogTag2.TagArticle>()
         .Where(j => j.ArticleId == a.Id && tagFilter.Values<long>().Contains(j.TagId))
         .Any())
-        .WhereIf(titleFilter.HasValue && !string.IsNullOrWhiteSpace(titleFilter.Options[0].Value),
-        a => a.Title.Contains(titleFilter.Options[0].Value!))
         .WhereIf(!string.IsNullOrWhiteSpace(e.SearchText),
         a => a.Title.Contains(e.SearchText!)
         || a.Keywords.Contains(e.SearchText!)

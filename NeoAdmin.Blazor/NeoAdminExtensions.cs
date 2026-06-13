@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using NeoAdmin.Blazor.Api;
@@ -48,6 +49,8 @@ public static class NeoAdminExtensions
         services.AddSingleton(serviceProvider =>
         {
             NeoAdminOptions options = serviceProvider.GetRequiredService<IOptions<NeoAdminOptions>>().Value;
+            ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            ILogger freeSqlLogger = loggerFactory.CreateLogger("FreeSql");
             SQLitePCL.Batteries.Init();
             FreeSqlSnowflakeSetup.SetIdGenerator(options.WorkId);
 
@@ -55,13 +58,12 @@ public static class NeoAdminExtensions
                 .UseConnectionString(options.DataType, options.ConnectionString)
                 .UseAutoSyncStructure(options.AutoSyncStructure);
 
-            if (options.MonitorCommand)
-            {
-                builder.UseMonitorCommand(command => Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {command.CommandText}"));
-            }
-
             IFreeSql freeSql = builder.Build();
             FreeSqlSnowflakeSetup.Configure(freeSql);
+            if (options.MonitorCommand)
+            {
+                FreeSqlMonitorSetup.Configure(freeSql, freeSqlLogger);
+            }
             if (options.AutoSyncStructure)
             {
                 FreeSqlSchedulerSetup.ConfigureEntities(freeSql);

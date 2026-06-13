@@ -12,7 +12,7 @@ public sealed class NeoAdminOptions
 
     public bool AutoSyncStructure { get; set; } = true;
 
-    public bool MonitorCommand { get; set; }
+    public bool MonitorCommand { get; set; } = true;
 
     public string SeedAdminUserName { get; set; } = "admin";
 
