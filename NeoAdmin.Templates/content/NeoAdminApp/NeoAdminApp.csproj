@@ -7,6 +7,8 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);**/neoadmin.db;**/neoadmin.db-*;**/wwwroot/uploads/**</DefaultItemExcludes>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- 默认使用模板自带的 wwwroot/css/tailwind.css；需要重新生成时传 -p:BuildTailwind=true -->
+    <BuildTailwind Condition="'$(BuildTailwind)' == ''">false</BuildTailwind>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,11 +37,11 @@
     <Content Include="wwwroot/css/tailwind.css" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json')">
+  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="'$(BuildTailwind)' == 'true' and Exists('$(ProjectDir)package.json')">
     <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" />
   </Target>
 
-  <Target Name="BuildTailwindCss" BeforeTargets="ResolveProjectStaticWebAssets" Condition="Exists('$(ProjectDir)package.json')">
+  <Target Name="BuildTailwindCss" BeforeTargets="ResolveProjectStaticWebAssets" Condition="'$(BuildTailwind)' == 'true' and Exists('$(ProjectDir)package.json')">
     <Exec Command="npm run build:css" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>

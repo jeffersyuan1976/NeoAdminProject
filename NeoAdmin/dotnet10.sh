@@ -1,1 +1,1 @@
-dotnet watch run --project NeoAdmin.csproj
+dotnet watch run --project NeoAdmin.csproj /p:BuildTailwind=true
