@@ -27,22 +27,20 @@
   </ItemGroup>
 
   <!-- Tailwind v4：宿主业务页 utility；NeoAdmin.Blazor 库样式仍走 NuGet 静态资源 -->
-  <!-- 服务器发布可传 -p:SkipTailwindBuild=true 跳过 npm install / build:css -->
-  <PropertyGroup>
-    <SkipTailwindBuild Condition="'$(SkipTailwindBuild)' == ''">false</SkipTailwindBuild>
-  </PropertyGroup>
-
   <ItemGroup>
     <Content Remove="package.json" />
     <Content Remove="package-lock.json" />
     <Content Remove="tailwind.config.js" />
+    <!-- 构建产物：纳入静态资源清单（Remove 避免与 SDK 默认 wwwroot 项重复） -->
+    <Content Remove="wwwroot/css/tailwind.css" />
+    <Content Include="wwwroot/css/tailwind.css" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json') And '$(SkipTailwindBuild)' != 'true'">
+  <Target Name="NpmInstall" BeforeTargets="BuildTailwindCss" Condition="Exists('$(ProjectDir)package.json')">
     <Exec Command="npm install" WorkingDirectory="$(ProjectDir)" />
   </Target>
 
-  <Target Name="BuildTailwindCss" BeforeTargets="Build" Condition="Exists('$(ProjectDir)package.json') And '$(SkipTailwindBuild)' != 'true'">
+  <Target Name="BuildTailwindCss" BeforeTargets="ResolveProjectStaticWebAssets" Condition="Exists('$(ProjectDir)package.json')">
     <Exec Command="npm run build:css" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>

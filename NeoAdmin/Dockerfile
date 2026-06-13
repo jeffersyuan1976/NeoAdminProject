@@ -9,14 +9,21 @@ COPY ["NeoAdmin.Blazor/NeoAdmin.Blazor.csproj", "NeoAdmin.Blazor/"]
 # 还原包
 RUN dotnet restore "NeoAdmin/NeoAdmin.csproj"
 
+# Tailwind v4：镜像内安装 Node，publish 时由 NeoAdmin.csproj 自动 npm install / build:css
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # 复制所有源代码
 COPY . .
 WORKDIR /src/NeoAdmin
 
 # 发布项目（.NET 10：publish 勿加 --no-restore，否则不会生成 wwwroot/_framework/blazor.web.js）
-# SkipTailwindBuild：不在镜像内跑 npm，使用 COPY 带入的 wwwroot/css/tailwind.css
 FROM build AS publish
-RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish -p:SkipTailwindBuild=true
+RUN dotnet publish "NeoAdmin.csproj" -c Release -o /app/publish
 
 # 第二阶段：运行阶段
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
