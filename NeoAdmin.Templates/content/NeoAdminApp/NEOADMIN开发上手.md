@@ -240,6 +240,7 @@ app.Run();
 | `WorkId` | 雪花 ID 机器号（0–63，多实例需不同） |
 | `EnableIpWhitelist` | IP 白名单（无启用记录时不拦截） |
 | `IsSwagger` | Swagger UI 开关 |
+| `LogDirectory` / `LogFilePrefix` | Serilog 文件日志目录与前缀（默认 `Logs/admin-*.log`） |
 | `FileUpload` | 上传目录、大小、扩展名限制 |
 
 > **注意**：业务表结构需在宿主 `SeedData/DataSetup.SyncStructure` 中显式调用 `freeSql.CodeFirst.SyncStructure<T>()`。
@@ -255,6 +256,149 @@ app.Run();
 @using NeoUI.Blazor.Services
 @using NeoUI.Icons.Lucide
 ```
+
+### 3.4 日志输出
+
+项目已内置 **Serilog**，业务代码直接使用标准 `ILogger<T>` 即可，**无需额外配置**。
+
+#### 3.4.1 已内置的基础设施
+
+`Program.cs` 中调用 `builder.AddNeoAdminSerilog()` 与 `app.UseNeoAdminSerilogRequestLogging()` 后，日志会自动输出到：
+
+| 输出位置 | 内容 |
+|---------|------|
+| **终端控制台** | 实时日志 |
+| **`Logs/admin-YYYYMMDD.log`** | 按天滚动，自动保留最近 30 个文件 |
+| **后台 `/admin/system-log`** | 在线浏览、按级别筛选、关键词搜索 |
+| **HTTP 请求** | 自动记录耗时，如 `HTTP GET /api/article responded 200 in 12.3 ms` |
+
+#### 3.4.2 各场景写法
+
+**Blazor 页面** — 注入泛型 `ILogger`，类名会自动成为 `SourceContext`：
+
+```razor
+@inject ILogger<MyPage> Logger
+
+@code {
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("进入页面：{Page}", nameof(MyPage));
+    }
+
+    private async Task OnSaveAsync()
+    {
+        try
+        {
+            // ...
+            Logger.LogInformation("保存成功，Id={Id}", id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "保存失败，Id={Id}", id);
+        }
+    }
+}
+```
+
+**API 控制器** — 继承 `BaseApiController` 时直接使用 `Logger` 属性：
+
+```csharp
+public sealed class MyController : BaseApiController
+{
+    public MyController(IFreeSql freeSql, NeoAdminAuthService auth, ILogger<MyController> logger)
+        : base(freeSql, auth, logger) { }
+
+    [HttpGet]
+    public async Task<ApiResult> Get()
+    {
+        Logger.LogInformation("查询开始");
+        // ...
+        return ApiResult.Success();
+    }
+}
+```
+
+不继承基类时，构造函数注入 `ILogger<MyController>` 即可（参考 `Api/ArticleController.cs`）。
+
+**Service 类** — 构造函数注入：
+
+```csharp
+public sealed class OrderService
+{
+    private readonly ILogger<OrderService> _logger;
+
+    public OrderService(ILogger<OrderService> logger) => _logger = logger;
+
+    public async Task ProcessAsync(long orderId)
+    {
+        _logger.LogInformation("处理订单，OrderId={OrderId}", orderId);
+    }
+}
+```
+
+**定时任务（Jobs）** — 静态方法通过 `ILoggerFactory` 创建：
+
+```csharp
+[Scheduler("my.job", "0 0 3 * * *")]
+public static async Task Run(IServiceProvider sp, TaskInfo task)
+{
+    var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(MyJobs));
+    logger.LogInformation("任务开始，TaskId={TaskId}", task.Id);
+    // ...
+}
+```
+
+参考 `Jobs/BlogJobs.cs`。
+
+**Program 启动阶段**：
+
+```csharp
+app.Logger.LogInformation("NeoAdmin 启动。Environment={Environment}", app.Environment.EnvironmentName);
+```
+
+#### 3.4.3 推荐写法
+
+使用占位符传参，不要用字符串拼接：
+
+```csharp
+// 推荐
+logger.LogInformation("用户 {UserId} 更新了 {Count} 条记录", userId, count);
+
+// 不推荐
+logger.LogInformation($"用户 {userId} 更新了 {count} 条记录");
+```
+
+记录异常时带上 `ex` 参数：
+
+```csharp
+logger.LogError(ex, "导入失败，文件={FileName}", fileName);
+```
+
+常用级别：
+
+| 方法 | 场景 |
+|------|------|
+| `LogInformation` | 正常业务流程 |
+| `LogWarning` | 可恢复异常、数据为空等 |
+| `LogError` | 失败、需关注 |
+| `LogDebug` | 调试细节（默认不输出，需调低级别） |
+
+#### 3.4.4 查看日志
+
+1. **开发时**：看运行 `dotnet run` / `dotnet watch run` 的终端输出
+2. **后台**：登录后打开 **系统日志** → `/admin/system-log`
+3. **文件**：应用目录下 `Logs/admin-*.log`
+
+可选配置（`appsettings.json`）：
+
+```json
+"NeoAdmin": {
+  "LogDirectory": "Logs",
+  "LogFilePrefix": "admin-"
+}
+```
+
+> **说明**：`DemoPageLog` 仅供 NeoDemo 演示页使用；业务代码请直接使用 `ILogger<T>`。数据库中的登录日志（`SysUserLoginLog`）不会随文件日志自动清理。
 
 ---
 

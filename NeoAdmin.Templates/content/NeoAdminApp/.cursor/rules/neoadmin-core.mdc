@@ -49,6 +49,8 @@ app.MapRazorComponents<App>()
 4. `SeedData/MenuSeedData` 注册菜单（`Path` 必须与 `@page` 路由一致）
 5. 可选：`Api/`、`Jobs/[Scheduler]`、`Services/`
 
+**日志**：业务逻辑须用 `ILogger<T>` 记录关键操作与异常（详见 `neoadmin-logging` 规则）。
+
 ## 常见坑
 
 | 问题 | 解决 |

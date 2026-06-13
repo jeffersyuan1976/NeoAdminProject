@@ -13,6 +13,7 @@ alwaysApply: false
 @layout LayoutAdmin
 @using NeoAdmin.Blazor.Components
 @inject IFreeSql FreeSql
+@inject ILogger<MyItem> Logger
 
 <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
     <CrudTable TItem="MyItem" Title="示例" PageSize="20"
@@ -87,3 +88,7 @@ e.Filters =
 演示页：`/neo-demo/ui/*`（NeoUI）、`/neo-demo/comp/*`（NeoAdmin 组件）、`/Blog/*`（业务示例）。
 
 全局 `_Imports.razor` 通常含：`NeoAdmin.Blazor.Components`、`NeoUI.Blazor`、`NeoUI.Icons.Lucide`。
+
+## 日志
+
+自定义 `OnSaveAsync` / `OnDeleteAsync` / 按钮事件时，用 `Logger.LogInformation` 记录操作，`catch` 中用 `Logger.LogError(ex, ...)`。详见 `neoadmin-logging` 规则。

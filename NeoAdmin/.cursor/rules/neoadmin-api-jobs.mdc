@@ -32,7 +32,10 @@ public sealed class ArticleController : ControllerBase
 public static async Task SyncArticleStats(IServiceProvider sp, TaskInfo task)
 {
     var freeSql = sp.GetRequiredService<IFreeSql>();
+    var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(BlogJobs));
+    logger.LogInformation("SyncArticleStats 开始，TaskId={TaskId}", task.Id);
     // 业务逻辑
+    logger.LogInformation("SyncArticleStats 完成");
 }
 ```
 
@@ -49,6 +52,7 @@ options.SchedulerAssemblies = [Assembly.GetExecutingAssembly()];
 | 服务 | 用途 |
 |------|------|
 | `IFreeSql` | 数据访问 |
+| `ILogger<T>` | 结构化日志（入口/结束/异常，见 `neoadmin-logging` 规则） |
 | `IToastService` | 轻提示 |
 | `DialogService` | 确认对话框 |
 | `MenuPermissionService` | 权限 |
