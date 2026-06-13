@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "NeoAdmin.Blazor"
+		},
+		{
+			"path": "NeoAdmin.Templates"
 		}
 	],
 	"settings": {}
