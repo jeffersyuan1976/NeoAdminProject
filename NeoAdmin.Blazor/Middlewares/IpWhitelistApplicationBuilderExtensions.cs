@@ -28,8 +28,7 @@ public static class IpWhitelistApplicationBuilderExtensions
 
         return !path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
                && !path.StartsWithSegments("/profile", StringComparison.OrdinalIgnoreCase)
-               && !path.StartsWithSegments("/_blazor", StringComparison.OrdinalIgnoreCase)
-               && !path.StartsWithSegments("/login", StringComparison.OrdinalIgnoreCase);
+               && !path.StartsWithSegments("/_blazor", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsPublicAssetPath(PathString path)

@@ -86,8 +86,7 @@ public sealed class IpWhitelistMiddleware
     private static bool ShouldSkipWhitelist(PathString path) =>
         path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/profile", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWithSegments("/_blazor", StringComparison.OrdinalIgnoreCase)
-        || path.StartsWithSegments("/login", StringComparison.OrdinalIgnoreCase);
+        || path.StartsWithSegments("/_blazor", StringComparison.OrdinalIgnoreCase);
 
     private static async Task RejectAsync(HttpContext context, string clientIpv4)
     {
