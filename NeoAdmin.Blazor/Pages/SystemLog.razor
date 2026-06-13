@@ -8,9 +8,9 @@
 
 <PageTitle>系统日志</PageTitle>
 
-<div class="neo-admin-page-scroll flex min-h-0 flex-1 flex-col gap-4">
-    <div class="rounded-lg border bg-card p-4 shadow-sm">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div class="flex min-h-0 flex-1 flex-col rounded-lg border bg-card p-4 shadow-sm">
+        <div class="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold">系统日志</h2>
                 <p class="text-sm text-muted-foreground">
@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div class="mb-4 grid gap-3 md:grid-cols-4">
+        <div class="mb-4 grid shrink-0 gap-3 md:grid-cols-4">
             <div class="space-y-2">
                 <Label for="system-log-file">日志文件</Label>
                 <select id="system-log-file"
@@ -76,12 +76,12 @@
 
         @if (!string.IsNullOrWhiteSpace(pageResult?.ErrorMessage))
         {
-            <Alert Variant="AlertVariant.Destructive" AccentBorder="true" Class="mb-4">
+            <Alert Variant="AlertVariant.Destructive" AccentBorder="true" Class="mb-4 shrink-0">
                 <AlertDescription>@pageResult.ErrorMessage</AlertDescription>
             </Alert>
         }
 
-        <div class="relative min-h-[320px] overflow-hidden rounded-md border">
+        <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
             @if (isLoading)
             {
                 <div class="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
@@ -89,7 +89,7 @@
                 </div>
             }
 
-            <div class="max-h-[min(70vh,720px)] overflow-auto">
+            <div class="min-h-0 flex-1 overflow-auto">
                 <table class="w-full min-w-[960px] text-sm">
                     <thead class="sticky top-0 z-[1] border-b bg-muted/90 backdrop-blur">
                         <tr>
@@ -135,7 +135,7 @@
 
         @if (pageResult is not null && pageResult.Total > 0)
         {
-            <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="mt-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
                 <span class="text-sm text-muted-foreground">
                     显示 @PageRangeStart-@PageRangeEnd，共 @pageResult.Total 条（最近读取 @MaxLinesHint 行）
                 </span>
