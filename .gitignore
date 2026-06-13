@@ -57,9 +57,6 @@ appsettings.*.local.json
 # Node
 node_modules/
 
-# Tailwind 构建产物（dotnet build / npm run build:css 生成）
-NeoAdmin/wwwroot/css/tailwind.css
-
 # Cursor / local AI（根目录个人配置不上传；宿主与模板 rules 纳入版本管理）
 .claude/
 .cursor/
