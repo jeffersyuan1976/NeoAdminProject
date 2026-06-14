@@ -1,0 +1,370 @@
+@namespace NeoAdmin.Blazor.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using NeoAdmin.Blazor.Entities
+@using NeoAdmin.Blazor.Extensions
+@using NeoAdmin.Blazor.Services
+@inject FileService FileService
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+@inject ILogger<NeoFileUpload> Logger
+
+<div class="space-y-2">
+    @if (ShowUploadedState)
+    {
+        <div class="rounded-lg border bg-muted/30 p-3">
+            @if (!string.IsNullOrWhiteSpace(PreviewLabel))
+            {
+                <p class="mb-2 text-xs text-muted-foreground">@PreviewLabel</p>
+            }
+            @if (IsImagePath(Value))
+            {
+                <img src="@NavigationManager.ToMediaUrl(Value!)"
+                     alt="@ImageAlt"
+                     class="@PreviewImageClass" />
+            }
+            else
+            {
+                <div class="flex items-center gap-2 text-sm">
+                    <LucideIcon Name="file" Size="16" Class="shrink-0 text-muted-foreground" />
+                    <a href="@NavigationManager.ToMediaUrl(Value!)"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="truncate text-primary underline-offset-4 hover:underline">
+                        @EffectiveDisplayName
+                    </a>
+                </div>
+            }
+        </div>
+        @if (!Disabled)
+        {
+            <Button Type="ButtonType.Button"
+                    Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.Small"
+                    OnClick="ClearAsync">
+                @ClearButtonText
+            </Button>
+        }
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(EmptyHint))
+        {
+            <p class="text-xs text-muted-foreground">@EmptyHint</p>
+        }
+        @if (Multiple && isUploading)
+        {
+            <p class="flex items-center gap-2 text-sm text-muted-foreground">
+                <LucideIcon Name="loader-circle" Size="16" Class="animate-spin" />
+                正在上传，请稍候…
+            </p>
+        }
+        <FileUpload @ref="fileUpload"
+                    Files="files"
+                    FilesChanged="OnFilesChangedAsync"
+                    Multiple="@Multiple"
+                    Accept="@Accept"
+                    MaxFileSize="@MaxFileSize"
+                    ShowPreview="@ShowLocalPreview"
+                    ShowProgress="@ShowProgress"
+                    Disabled="@(Disabled || isUploading)" />
+    }
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <p class="text-xs text-muted-foreground">@HelpText</p>
+    }
+</div>
+
+@code {
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"
+    };
+
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>展示用文件名；未设置时从 Value 路径或最近一次上传结果推断。</summary>
+    [Parameter]
+    public string? DisplayName { get; set; }
+
+    /// <summary>上传到 FileService 的子目录，如 site、blog/classify；留空使用默认目录。</summary>
+    [Parameter]
+    public string UploadDirectory { get; set; } = "uploads";
+
+    [Parameter]
+    public long MaxFileSize { get; set; } = 5 * 1024 * 1024;
+
+    /// <summary>传给浏览器的 accept，如 image/*、.pdf；留空表示不限制。</summary>
+    [Parameter]
+    public string Accept { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Multiple { get; set; }
+
+    [Parameter]
+    public bool ShowProgress { get; set; }
+
+    [Parameter]
+    public string ImageAlt { get; set; } = "文件预览";
+
+    [Parameter]
+    public string? PreviewLabel { get; set; } = "当前文件";
+
+    [Parameter]
+    public string? EmptyHint { get; set; } = "尚未上传文件，选择后将自动上传。";
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public string ClearButtonText { get; set; } = "清除";
+
+    [Parameter]
+    public string PreviewImageClass { get; set; } = "h-32 max-w-full rounded-md border bg-background object-cover";
+
+    [Parameter]
+    public bool ShowLocalPreview { get; set; } = true;
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public bool ShowToastOnSuccess { get; set; } = true;
+
+    [Parameter]
+    public string ToastTitle { get; set; } = "文件";
+
+    [Parameter]
+    public EventCallback<SysFile> OnUploaded { get; set; }
+
+    [Parameter]
+    public EventCallback OnCleared { get; set; }
+
+    /// <summary>多文件模式下，当前选择全部上传完成时触发。</summary>
+    [Parameter]
+    public EventCallback<NeoFileUploadBatchResult> OnAllUploaded { get; set; }
+
+    private FileUpload? fileUpload;
+    private List<IBrowserFile> files = [];
+    private bool isUploading;
+    private string? lastUploadedName;
+    private int processedFileCount;
+    private bool suppressFilesChanged;
+
+    private bool ShowUploadedState =>
+        !Multiple && !string.IsNullOrWhiteSpace(Value);
+
+    private string EffectiveDisplayName =>
+        !string.IsNullOrWhiteSpace(DisplayName)
+            ? DisplayName
+            : !string.IsNullOrWhiteSpace(lastUploadedName)
+                ? lastUploadedName
+                : Path.GetFileName(Value ?? string.Empty);
+
+    /// <summary>重置多文件上传状态（对话框关闭时调用）。</summary>
+    public bool IsUploading => isUploading;
+
+    public async Task ResetAsync()
+    {
+        processedFileCount = 0;
+        isUploading = false;
+        suppressFilesChanged = false;
+        await ResetFileInputAsync();
+    }
+
+    private async Task OnFilesChangedAsync(List<IBrowserFile> selectedFiles)
+    {
+        if (Multiple)
+        {
+            await OnMultipleFilesChangedAsync(selectedFiles);
+            return;
+        }
+
+        files = selectedFiles;
+        if (selectedFiles.Count == 0 || isUploading || Disabled)
+        {
+            return;
+        }
+
+        await UploadSingleFileAsync(selectedFiles[0]);
+    }
+
+    private async Task OnMultipleFilesChangedAsync(List<IBrowserFile> selectedFiles)
+    {
+        if (suppressFilesChanged)
+        {
+            return;
+        }
+
+        files = selectedFiles;
+        if (selectedFiles.Count == 0)
+        {
+            processedFileCount = 0;
+            return;
+        }
+
+        if (isUploading || Disabled || selectedFiles.Count <= processedFileCount)
+        {
+            return;
+        }
+
+        List<IBrowserFile> newFiles = selectedFiles.Skip(processedFileCount).ToList();
+        int batchStart = processedFileCount;
+        int totalSelectedCount = selectedFiles.Count;
+
+        List<(string Name, byte[] Bytes)> bufferedFiles = [];
+        foreach (IBrowserFile file in newFiles)
+        {
+            try
+            {
+                await using Stream stream = file.OpenReadStream(MaxFileSize);
+                using MemoryStream buffer = new();
+                await stream.CopyToAsync(buffer);
+                bufferedFiles.Add((file.Name, buffer.ToArray()));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "NeoFileUpload 读取待上传文件失败，FileName={FileName}", file.Name);
+                ToastService.Error("读取文件失败", $"{file.Name}: {ex.Message}");
+            }
+        }
+
+        if (bufferedFiles.Count == 0)
+        {
+            Logger.LogWarning("NeoFileUpload 没有可上传的文件，NewCount={NewCount}", newFiles.Count);
+            return;
+        }
+
+        await UploadMultipleFilesAsync(bufferedFiles, batchStart, totalSelectedCount);
+    }
+
+    private async Task UploadSingleFileAsync(IBrowserFile file)
+    {
+        isUploading = true;
+        Logger.LogInformation("NeoFileUpload 开始上传，Directory={Directory}，FileName={FileName}", UploadDirectory, file.Name);
+        try
+        {
+            SysFile uploaded = await FileService.UploadFileAsync(
+                file,
+                UploadDirectory,
+                isRename: true,
+                maxSizeLimit: MaxFileSize);
+            Value = uploaded.LinkUrl;
+            lastUploadedName = uploaded.OriginFileName;
+            await ValueChanged.InvokeAsync(Value);
+            await OnUploaded.InvokeAsync(uploaded);
+            if (ShowToastOnSuccess)
+            {
+                ToastService.Success(ToastTitle, "上传成功");
+            }
+
+            Logger.LogInformation("NeoFileUpload 上传成功，Url={Url}", uploaded.LinkUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "NeoFileUpload 上传失败，Directory={Directory}", UploadDirectory);
+            ToastService.Error("文件上传失败", ex.Message);
+        }
+        finally
+        {
+            await ResetFileInputAsync();
+            isUploading = false;
+        }
+    }
+
+    private async Task UploadMultipleFilesAsync(
+        IReadOnlyList<(string Name, byte[] Bytes)> batchFiles,
+        int batchStart,
+        int totalSelectedCount)
+    {
+        isUploading = true;
+        Logger.LogInformation("NeoFileUpload 开始批量上传，Count={Count}", batchFiles.Count);
+
+        int success = 0;
+        List<SysFile> uploadedFiles = [];
+        try
+        {
+            foreach ((string name, byte[] bytes) in batchFiles)
+            {
+                try
+                {
+                    SysFile uploaded = await FileService.UploadBytesAsync(
+                        name,
+                        bytes,
+                        UploadDirectory,
+                        isRename: true);
+                    success++;
+                    uploadedFiles.Add(uploaded);
+                    await OnUploaded.InvokeAsync(uploaded);
+                    Logger.LogInformation("NeoFileUpload 批量上传成功，FileName={FileName}", name);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "NeoFileUpload 批量上传失败，FileName={FileName}", name);
+                    ToastService.Error("上传失败", $"{name}: {ex.Message}");
+                }
+            }
+
+            if (success > 0)
+            {
+                processedFileCount = batchStart + success;
+                if (ShowToastOnSuccess)
+                {
+                    ToastService.Success(ToastTitle, $"已成功上传 {success} 个文件。");
+                }
+            }
+        }
+        finally
+        {
+            isUploading = false;
+
+            if (success > 0 && success == batchFiles.Count && processedFileCount >= totalSelectedCount)
+            {
+                suppressFilesChanged = true;
+                await ResetFileInputAsync();
+                suppressFilesChanged = false;
+                processedFileCount = 0;
+
+                await OnAllUploaded.InvokeAsync(new NeoFileUploadBatchResult(success, uploadedFiles));
+            }
+        }
+    }
+
+    private async Task ClearAsync()
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        Logger.LogInformation("NeoFileUpload 清除文件");
+        Value = null;
+        lastUploadedName = null;
+        await ValueChanged.InvokeAsync(Value);
+        await OnCleared.InvokeAsync();
+        await ResetFileInputAsync();
+    }
+
+    private async Task ResetFileInputAsync()
+    {
+        files = [];
+        if (fileUpload is not null)
+        {
+            await fileUpload.ClearFiles();
+        }
+    }
+
+    private static bool IsImagePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        string ext = Path.GetExtension(path);
+        return ImageExtensions.Contains(ext);
+    }
+}

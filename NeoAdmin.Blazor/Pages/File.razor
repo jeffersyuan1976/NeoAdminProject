@@ -1,6 +1,5 @@
 @page "/admin/file"
 @layout LayoutAdmin
-@using Microsoft.AspNetCore.Components.Forms
 @using NeoAdmin.Blazor.Components
 @using NeoAdmin.Blazor.Entities
 @using NeoAdmin.Blazor.Services
@@ -85,20 +84,16 @@
     <EditTemplate>
         <div class="space-y-3 p-1">
             <p class="text-sm text-muted-foreground">选择一个或多个文件后将自动上传，全部成功后对话框会自动关闭。</p>
-            @if (isUploading)
-            {
-                <p class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <LucideIcon Name="loader-circle" Size="16" Class="animate-spin" />
-                    正在上传，请稍候…
-                </p>
-            }
-            <FileUpload @ref="fileUpload"
-                        FilesChanged="OnFilesChangedAsync"
-                        Multiple="true"
-                        ShowProgress="false"
-                        ShowPreview="false"
-                        Disabled="isUploading"
-                        MaxFileSize="104857600" />
+            <NeoFileUpload @ref="fileUpload"
+                           Multiple="true"
+                           UploadDirectory=""
+                           MaxFileSize="@MaxUploadBytes"
+                           ShowLocalPreview="false"
+                           ShowProgress="false"
+                           EmptyHint="@null"
+                           ShowToastOnSuccess="true"
+                           ToastTitle="上传文件"
+                           OnAllUploaded="HandleAllUploadedAsync" />
         </div>
     </EditTemplate>
     <ViewTemplate Context="item">
@@ -170,10 +165,7 @@
     };
 
     private CrudTable<SysFile> table = default!;
-    private FileUpload? fileUpload;
-    private int processedFileCount;
-    private bool isUploading;
-    private bool suppressFilesChanged;
+    private NeoFileUpload? fileUpload;
 
     private void HandleQuery(CrudQueryEventArgs<SysFile> e)
     {
@@ -186,122 +178,16 @@
             .OrderByDescending(a => a.CreatedTime);
     }
 
-    private async Task OnFilesChangedAsync(List<IBrowserFile> files)
+    private async Task HandleAllUploadedAsync(NeoFileUploadBatchResult result)
     {
-        if (suppressFilesChanged)
-        {
-            return;
-        }
-
-        try
-        {
-            Logger.LogInformation("文件选择变更，Count={Count}，Processed={Processed}，Uploading={Uploading}",
-                files.Count, processedFileCount, isUploading);
-
-            if (files.Count == 0)
-            {
-                processedFileCount = 0;
-                return;
-            }
-
-            if (isUploading || files.Count <= processedFileCount)
-            {
-                return;
-            }
-
-            List<IBrowserFile> newFiles = files.Skip(processedFileCount).ToList();
-            int batchStart = processedFileCount;
-
-            List<(string Name, byte[] Bytes)> bufferedFiles = [];
-            foreach (IBrowserFile file in newFiles)
-            {
-                try
-                {
-                    await using Stream stream = file.OpenReadStream(MaxUploadBytes);
-                    using MemoryStream buffer = new();
-                    await stream.CopyToAsync(buffer);
-                    bufferedFiles.Add((file.Name, buffer.ToArray()));
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "读取待上传文件失败，FileName={FileName}", file.Name);
-                    ToastService.Error("读取文件失败", $"{file.Name}: {ex.Message}");
-                }
-            }
-
-            if (bufferedFiles.Count == 0)
-            {
-                Logger.LogWarning("没有可上传的文件，NewCount={NewCount}", newFiles.Count);
-                return;
-            }
-
-            await UploadFilesAsync(bufferedFiles, batchStart, files.Count);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "处理文件选择变更失败");
-            ToastService.Error("上传文件", ex.Message);
-        }
-    }
-
-    private async Task UploadFilesAsync(
-        IReadOnlyList<(string Name, byte[] Bytes)> files,
-        int batchStart,
-        int totalSelectedCount)
-    {
-        isUploading = true;
-        Logger.LogInformation("开始上传文件，Count={Count}", files.Count);
-        StateHasChanged();
-
-        int success = 0;
-        try
-        {
-            foreach ((string name, byte[] bytes) in files)
-            {
-                try
-                {
-                    await FileService.UploadBytesAsync(name, bytes);
-                    success++;
-                    Logger.LogInformation("上传文件成功，FileName={FileName}", name);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "上传文件失败，FileName={FileName}", name);
-                    ToastService.Error("上传失败", $"{name}: {ex.Message}");
-                }
-            }
-
-            if (success > 0)
-            {
-                processedFileCount = batchStart + success;
-                ToastService.Success("上传文件", $"已成功上传 {success} 个文件。");
-                await table.ReloadAsync();
-            }
-        }
-        finally
-        {
-            isUploading = false;
-
-            if (success > 0 && success == files.Count && processedFileCount >= totalSelectedCount)
-            {
-                suppressFilesChanged = true;
-                if (fileUpload is not null)
-                {
-                    await fileUpload.ClearFiles();
-                }
-
-                suppressFilesChanged = false;
-                processedFileCount = 0;
-                await table.CloseEditorAsync();
-            }
-
-            StateHasChanged();
-        }
+        Logger.LogInformation("文件管理批量上传完成，Count={Count}", result.SuccessCount);
+        await table.ReloadAsync();
+        await table.CloseEditorAsync();
     }
 
     private async Task<bool> HandleSaveAsync(SysFile item, bool isNew)
     {
-        if (isUploading)
+        if (fileUpload?.IsUploading == true)
         {
             ToastService.Warning("上传文件", "正在上传，请稍候。");
             return false;
@@ -327,12 +213,12 @@
         }
     }
 
-    private Task HandleEditClose(SysFile _)
+    private async Task HandleEditClose(SysFile _)
     {
-        processedFileCount = 0;
-        isUploading = false;
-        suppressFilesChanged = false;
-        return Task.CompletedTask;
+        if (fileUpload is not null)
+        {
+            await fileUpload.ResetAsync();
+        }
     }
 
     private static bool IsImageFile(string? extension)

@@ -1,0 +1,135 @@
+@page "/neo-demo/comp/file-upload"
+@page "/neo-demo/comp/image-upload"
+@layout LayoutAdmin
+@using NeoAdmin.Blazor.Components
+@using NeoAdminApp.Components.Pages.DemoComp.Snippets
+@inject ILogger<FileUploadDemo> Logger
+@inject NavigationManager NavigationManager
+
+<PageTitle>上传组件</PageTitle>
+
+<div class="neo-admin-page-scroll flex min-h-0 flex-1 flex-col gap-4 p-1">
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="border-b px-4 py-3">
+            <strong class="text-base font-semibold">NeoFileUpload 上传组件</strong>
+            <p class="mt-1 text-sm text-muted-foreground">
+                封装 NeoUI <code class="rounded bg-muted px-1 py-0.5 text-xs">FileUpload</code> 与
+                <code class="rounded bg-muted px-1 py-0.5 text-xs">FileService</code>：图片显示预览，其他格式显示文件名链接；清除后可继续上传。
+            </p>
+        </div>
+
+        <div class="p-4">
+            <SearchableTabs DefaultValue="image" Class="w-full">
+                <div class="overflow-x-auto pb-1">
+                    <TabsList Class="inline-flex h-auto w-max min-w-full flex-wrap gap-1">
+                        <TabsTrigger Value="image">图片</TabsTrigger>
+                        <TabsTrigger Value="file">文件</TabsTrigger>
+                    </TabsList>
+                </div>
+
+                <TabsContent Value="image" Class="mt-4 space-y-4">
+                    <DemoSection Title="图片上传"
+                                 Description="Accept 设为 image/* 时，上传后显示图片预览。"
+                                 Code="@FileUploadDemoSnippets.Image">
+                        <div class="max-w-md space-y-3">
+                            <NeoFileUpload @bind-Value="coverUrl"
+                                           UploadDirectory="demo/file-upload"
+                                           Accept="image/*"
+                                           HelpText="仅图片，最大 5MB；选择后自动上传。" />
+                            <p class="text-sm text-muted-foreground">
+                                当前地址：@(string.IsNullOrWhiteSpace(coverUrl) ? "未上传" : coverUrl)
+                            </p>
+                        </div>
+                    </DemoSection>
+
+                    <DemoSection Title="常用参数"
+                                 Description="可自定义预览样式、提示文案，以及上传/清除回调。"
+                                 Code="@FileUploadDemoSnippets.Parameters">
+                        <div class="max-w-md space-y-3">
+                            <NeoFileUpload @bind-Value="logoUrl"
+                                           UploadDirectory="demo/file-upload"
+                                           Accept="image/*"
+                                           PreviewLabel="LOGO 预览"
+                                           EmptyHint="尚未设置 LOGO，选择图片后将自动上传。"
+                                           ClearButtonText="清除 LOGO"
+                                           PreviewImageClass="h-24 w-24 rounded-md border bg-background object-contain"
+                                           OnUploaded="HandleLogoUploaded"
+                                           OnCleared="HandleLogoCleared" />
+                            @if (!string.IsNullOrWhiteSpace(lastEvent))
+                            {
+                                <p class="text-xs text-muted-foreground">@lastEvent</p>
+                            }
+                        </div>
+                    </DemoSection>
+                </TabsContent>
+
+                <TabsContent Value="file" Class="mt-4 space-y-4">
+                    <DemoSection Title="文档上传"
+                                 Description="非图片文件显示文件名与下载链接，可通过 DisplayName 指定展示名称。"
+                                 Code="@FileUploadDemoSnippets.Document">
+                        <div class="max-w-md space-y-3">
+                            <NeoFileUpload @bind-Value="docUrl"
+                                           DisplayName="@docName"
+                                           UploadDirectory="demo/file-upload"
+                                           Accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                           ShowLocalPreview="false"
+                                           HelpText="支持 PDF、Word、Excel。"
+                                           OnUploaded="HandleDocUploaded" />
+                        </div>
+                    </DemoSection>
+
+                    <DemoSection Title="在 CRUD 编辑表单中使用"
+                                 Description="绑定 URL 字段，DisplayName 或 OnUploaded 可同步原始文件名。"
+                                 Code="@FileUploadDemoSnippets.CrudEdit">
+                        <p class="text-sm text-muted-foreground">
+                            参考 <a class="text-primary underline-offset-4 hover:underline" href="/Blog/Classify">随笔专栏</a>
+                            封面图场景；文档类附件同样适用。
+                        </p>
+                    </DemoSection>
+                </TabsContent>
+            </SearchableTabs>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? coverUrl;
+    private string? docUrl;
+    private string? docName;
+    private string? logoUrl;
+    private string lastEvent = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        DemoPageLog.Enter(Logger, "上传组件");
+
+        // 旧路由兼容：重定向到新地址
+        if (NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
+            .TrimEnd('/')
+            .Equals("neo-demo/comp/image-upload", StringComparison.OrdinalIgnoreCase))
+        {
+            NavigationManager.NavigateTo("/neo-demo/comp/file-upload", replace: true);
+        }
+    }
+
+    private Task HandleDocUploaded(NeoAdmin.Blazor.Entities.SysFile file)
+    {
+        docName = file.OriginFileName;
+        Logger.LogInformation("演示页文档上传，Name={Name}", file.OriginFileName);
+        return Task.CompletedTask;
+    }
+
+    private Task HandleLogoUploaded(NeoAdmin.Blazor.Entities.SysFile file)
+    {
+        lastEvent = $"上传回调：{file.OriginFileName} → {file.LinkUrl}";
+        Logger.LogInformation("演示页上传回调，Url={Url}", file.LinkUrl);
+        return Task.CompletedTask;
+    }
+
+    private Task HandleLogoCleared()
+    {
+        lastEvent = "已触发清除回调，可重新选择文件。";
+        Logger.LogInformation("演示页清除回调");
+        return Task.CompletedTask;
+    }
+}

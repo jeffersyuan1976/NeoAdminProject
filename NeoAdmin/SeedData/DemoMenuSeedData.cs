@@ -21,6 +21,10 @@ public static class DemoMenuSeedData
         RemoveMovedBusinessDemoMenus(freeSql);
 
         freeSql.Delete<SysMenu>()
+            .Where(a => a.Path == "/neo-demo/comp/image-upload")
+            .ExecuteAffrows();
+
+        freeSql.Delete<SysMenu>()
             .Where(a => a.IsSystem
                         && a.Path.StartsWith("/neo-demo/")
                         && !a.Path.StartsWith("/neo-demo/comp/")
@@ -124,6 +128,7 @@ public static class DemoMenuSeedData
                 BlazorMenuSeedData.Page("实体选择", "/neo-demo/comp/select-components", 401, "list-checks"),
                 BlazorMenuSeedData.Page("字典和参数", "/neo-demo/comp/dict-param", 402, "sliders-horizontal"),
                 BlazorMenuSeedData.Page("权限说明", "/neo-demo/comp/permission-guide", 407, "book-open"),
+                BlazorMenuSeedData.Page("上传组件", "/neo-demo/comp/file-upload", 408, "upload"),
                 BlazorMenuSeedData.Menu("按钮权限", "shield", "/neo-demo/comp/nova-button", 403, children:
                 [
                     BlazorMenuSeedData.Button("允许演示", "check", "demo_allow", 301),

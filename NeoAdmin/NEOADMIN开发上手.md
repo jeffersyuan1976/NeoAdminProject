@@ -158,7 +158,7 @@ dotnet watch run
 | 路由前缀 | 内容 |
 |---------|------|
 | `/neo-demo/ui/*` | NeoUI 基础控件演示（18 个页面） |
-| `/neo-demo/comp/*` | NeoAdmin 扩展组件（字典、选择器、权限等） |
+| `/neo-demo/comp/*` | NeoAdmin 扩展组件（字典、选择器、上传、权限等） |
 | `/Blog/*` | 博客业务 CRUD 示例 |
 | `/admin/*` | 系统管理（框架提供） |
 
@@ -824,7 +824,7 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 
 ## 10. NeoAdmin.Blazor 组件详解
 
-以下为框架自带的 **21 个** Blazor 组件（含布局与内部壳组件）。
+以下为框架自带的 **22 个** Blazor 组件（含布局与内部壳组件）。
 
 ### 10.1 CrudTable\<TItem\>
 
@@ -997,11 +997,109 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 <NeoParamText ParamKey="Home_ContactCard" DefaultText="未配置" TagName="div" />
 ```
 
-### 10.14 NeoPickerOverlayHost
+### 10.14 NeoFileUpload
+
+封装 NeoUI `FileUpload` 与框架 `FileService`：选文件后自动上传；**图片**显示预览，**其他格式**显示文件名链接；带清除按钮，清除后可重新上传。支持单文件绑定与多文件批量两种模式。
+
+**演示页**：`/neo-demo/comp/file-upload`（标签页：**图片** / **文件**）
+
+#### 单文件模式（默认）
+
+绑定实体字段中的**相对路径**（如 `uploads/20250614/xxx.png`），适用于 CRUD 编辑表单、站点 LOGO 等。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `Value` / `ValueChanged` | string? | | 文件相对路径（`LinkUrl`） |
+| `DisplayName` | string? | null | 非图片时的展示文件名 |
+| `UploadDirectory` | string | `"uploads"` | 上传到 `wwwroot` 下的子目录 |
+| `MaxFileSize` | long | 5MB | 单文件大小上限（字节） |
+| `Accept` | string | `""` | 浏览器 accept，如 `image/*`、`.pdf`；空表示不限制 |
+| `PreviewLabel` | string? | `"当前文件"` | 已上传时的标题 |
+| `EmptyHint` | string? | 见组件 | 未上传时的提示 |
+| `HelpText` | string? | null | 底部说明 |
+| `ClearButtonText` | string | `"清除"` | 清除按钮文字 |
+| `PreviewImageClass` | string | 见组件 | 图片预览 CSS 类 |
+| `ShowLocalPreview` | bool | true | 选择时 NeoUI 本地预览 |
+| `ShowToastOnSuccess` | bool | true | 上传成功 Toast |
+| `ToastTitle` | string | `"文件"` | Toast 标题 |
+| `Disabled` | bool | false | 禁用 |
+| `OnUploaded` | EventCallback\<SysFile\> | | 上传成功（可选，用于同步其他字段或立即落库） |
+| `OnCleared` | EventCallback | | 点击清除后（可选，用于同步 `DisplayName` 或立即落库） |
+
+```razor
+@* CRUD 编辑：保存表单时一并写入数据库 *@
+<NeoFileUpload @bind-Value="item.Thumbnail"
+               UploadDirectory="blog/classify"
+               Accept="image/*"
+               HelpText="仅图片，最大 5MB。" />
+
+@* 文档附件：同步原始文件名 *@
+<NeoFileUpload @bind-Value="item.AttachmentUrl"
+               DisplayName="@item.AttachmentName"
+               Accept=".pdf,.doc,.docx"
+               ShowLocalPreview="false"
+               OnUploaded="f => item.AttachmentName = f.OriginFileName"
+               OnCleared="() => item.AttachmentName = null" />
+
+@* 上传后立即保存（站点设置 LOGO） *@
+<NeoFileUpload @bind-Value="model.Logo"
+               UploadDirectory="site"
+               Accept="image/*"
+               PreviewLabel="当前已设置"
+               ClearButtonText="清除 LOGO"
+               ShowToastOnSuccess="false"
+               OnUploaded="HandleLogoUploadedAsync"
+               OnCleared="HandleLogoClearedAsync" />
+```
+
+> **`OnUploaded` / `OnCleared` 何时需要？**  
+> 仅 `@bind-Value` 即可更新 URL 字段；若还有 `DisplayName` 等关联字段要同步，或像站点设置那样**上传/清除后立即写库**，再使用这两个回调。
+
+#### 多文件模式
+
+设置 `Multiple="true"` 时始终显示上传区，不展示单文件预览；适合文件管理页批量上传。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `Multiple` | bool | `true` 启用多文件 |
+| `ShowProgress` | bool | 是否显示进度条 |
+| `OnAllUploaded` | EventCallback\<NeoFileUploadBatchResult\> | 当前选择全部上传完成 |
+| `ResetAsync()` | 方法 | 对话框关闭时重置内部状态 |
+| `IsUploading` | bool | 是否正在上传 |
+
+```razor
+<NeoFileUpload @ref="fileUpload"
+               Multiple="true"
+               UploadDirectory=""
+               MaxFileSize="104857600"
+               ShowLocalPreview="false"
+               ToastTitle="上传文件"
+               OnAllUploaded="HandleAllUploadedAsync" />
+
+@code {
+    private NeoFileUpload? fileUpload;
+
+    private async Task HandleAllUploadedAsync(NeoFileUploadBatchResult result)
+    {
+        await table.ReloadAsync();
+        await table.CloseEditorAsync();
+    }
+
+    private async Task HandleEditClose(SysFile _)
+    {
+        if (fileUpload is not null)
+            await fileUpload.ResetAsync();
+    }
+}
+```
+
+参考实现：`NeoAdmin.Blazor/Pages/File.razor`（文件管理）、`Pages/SiteSettings.razor`（品牌图片）。
+
+### 10.15 NeoPickerOverlayHost
 
 全局弹窗宿主，无 Parameter。由 `NeoPickerOverlayService` 驱动，已在布局中自动挂载。
 
-### 10.15 SplitPane
+### 10.16 SplitPane
 
 左右可拖拽分栏。
 
@@ -1014,7 +1112,7 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 | `ShowBarHandle` | bool | true | 显示拖拽条 |
 | `Class` | string? | | 容器样式 |
 
-### 10.16 LayoutAdmin / LayoutEmpty
+### 10.17 LayoutAdmin / LayoutEmpty
 
 | 布局 | 用途 |
 |------|------|
@@ -1023,7 +1121,7 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 
 页面声明：`@layout LayoutAdmin`
 
-### 10.17 LayoutAdminSidebarMenu
+### 10.18 LayoutAdminSidebarMenu
 
 | 参数 | 类型 | 默认值 |
 |------|------|--------|
@@ -1032,7 +1130,7 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 
 一般由 `LayoutAdmin` 内部使用。
 
-### 10.18 DefaultLogin
+### 10.19 DefaultLogin
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -1041,7 +1139,7 @@ private void HandleQuery(CrudQueryEventArgs<MyItem> e)
 | `UsernameRequiredMessage` | string | `"请输入用户名"` | 校验提示 |
 | `UsernameLengthMessage` | string | `"用户名不能超过 50 个字符"` | |
 
-### 10.19 DemoSection / SearchableTabs
+### 10.20 DemoSection / SearchableTabs
 
 演示页辅助组件：
 
@@ -1338,6 +1436,8 @@ var result = await DialogService.ConfirmAsync(new DialogOptions
 | 卡片/列表切换 | `DataView` |
 | 树形数据 | `TreeView` |
 | 实体单选/多选 | `NeoInputTable` / `NeoSelectTable` |
+| 单文件上传（图片/附件） | `NeoFileUpload` |
+| 多文件批量上传 | `NeoFileUpload` + `Multiple="true"` |
 | 主从分配 | `NeoAllocTable` |
 | 左右联动 | `SplitPane` + 两个 `CrudTable` |
 
@@ -1577,7 +1677,7 @@ python3 NeoAdmin.Templates/sync-from-neoadmin.py
 
 ---
 
-## 附录 A：NeoAdmin.Blazor 组件清单（21 个）
+## 附录 A：NeoAdmin.Blazor 组件清单（22 个）
 
 | # | 组件 | 分类 |
 |---|------|------|
@@ -1594,14 +1694,15 @@ python3 NeoAdmin.Templates/sync-from-neoadmin.py
 | 11 | NeoAllocTable\<TItem,TChild,TKey\> | 分配 |
 | 12 | NeoAllocSelectionBadges | 分配 |
 | 13 | NeoParamText | 参数 |
-| 14 | NeoPickerOverlayHost | 弹窗宿主 |
-| 15 | SplitPane | 布局 |
-| 16 | LayoutAdmin | 布局 |
-| 17 | LayoutAdminSidebarMenu | 布局 |
-| 18 | LayoutEmpty | 布局 |
-| 19 | DefaultLogin | 认证 |
-| 20 | DemoSection | 演示 |
-| 21 | SearchableTabs | 演示 |
+| 14 | NeoFileUpload | 上传 |
+| 15 | NeoPickerOverlayHost | 弹窗宿主 |
+| 16 | SplitPane | 布局 |
+| 17 | LayoutAdmin | 布局 |
+| 18 | LayoutAdminSidebarMenu | 布局 |
+| 19 | LayoutEmpty | 布局 |
+| 20 | DefaultLogin | 认证 |
+| 21 | DemoSection | 演示 |
+| 22 | SearchableTabs | 演示 |
 
 ## 附录 B：NeoUI 组件统计
 
